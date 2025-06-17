@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.example.mapper.MenuMapper">
+
+    <!-- 结果映射 -->
+    <resultMap id="BaseResultMap" type="org.example.entity.Menu">
+        <id column="id" property="id" jdbcType="INTEGER"/>
+        <result column="menu" property="menu" jdbcType="VARCHAR"/>
+        <result column="name" property="name" jdbcType="VARCHAR"/>
+        <result column="level" property="level" jdbcType="TINYINT"/>
+        <result column="create_time" property="createTime" jdbcType="TIMESTAMP"/>
+        <result column="update_time" property="updateTime" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <!-- 基础SQL片段 -->
+    <sql id="Base_Column_List">
+        id, menu, name, level, create_time, update_time
+    </sql>
+
+    <!-- 根据ID查询菜单 -->
+    <select id="selectById" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM menu
+        WHERE id = #{id}
+    </select>
+
+    <!-- 查询所有菜单，按层级和ID排序 -->
+    <select id="selectAllOrderByLevelAndId" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM menu
+        ORDER BY level ASC, id ASC
+    </select>
+
+    <!-- 根据层级查询菜单 -->
+    <select id="selectByLevel" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM menu
+        WHERE level = #{level}
+        ORDER BY id ASC
+    </select>
+
+    <!-- 根据层级范围查询菜单 -->
+    <select id="selectByLevelRange" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM menu
+        WHERE level BETWEEN #{minLevel} AND #{maxLevel}
+        ORDER BY level ASC, id ASC
+    </select>
+
+    <!-- 根据菜单标识查询 -->
+    <select id="selectByMenu" parameterType="java.lang.String" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM menu
+        WHERE menu = #{menu}
+    </select>
+
+    <!-- 根据菜单名称模糊查询 -->
+    <select id="selectByNameLike" parameterType="java.lang.String" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM menu
+        WHERE name LIKE CONCAT('%', #{name}, '%')
+        ORDER BY level ASC, id ASC
+    </select>
+
+    <!-- 查询最大层级 -->
+    <select id="selectMaxLevel" resultType="java.lang.Integer">
+        SELECT MAX(level) FROM menu
+    </select>
+
+    <!-- 查询指定层级的菜单数量 -->
+    <select id="countByLevel" parameterType="java.lang.Integer" resultType="java.lang.Long">
+        SELECT COUNT(*) FROM menu WHERE level = #{level}
+    </select>
+
+    <!-- 根据层级和名称查询 -->
+    <select id="selectByLevelAndNameLike" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM menu
+        WHERE level = #{level} AND name LIKE CONCAT('%', #{name}, '%')
+        ORDER BY id ASC
+    </select>
+
+    <!-- 插入菜单 -->
+    <insert id="insert" parameterType="org.example.entity.Menu" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO menu (menu, name, level, create_time, update_time)
+        VALUES (#{menu}, #{name}, #{level}, NOW(), NOW())
+    </insert>
+
+    <!-- 更新菜单 -->
+    <update id="updateById" parameterType="org.example.entity.Menu">
+        UPDATE menu
+        SET menu = #{menu},
+            name = #{name},
+            level = #{level},
+            update_time = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <!-- 删除菜单 -->
+    <delete id="deleteById" parameterType="java.lang.Integer">
+        DELETE FROM menu WHERE id = #{id}
+    </delete>
+
+</mapper>

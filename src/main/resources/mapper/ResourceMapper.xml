@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.example.mapper.ResourceMapper">
+
+    <!-- 结果映射 -->
+    <resultMap id="BaseResultMap" type="org.example.entity.Resource">
+        <id column="id" property="id" jdbcType="INTEGER"/>
+        <result column="name" property="name" jdbcType="VARCHAR"/>
+        <result column="content" property="content" jdbcType="LONGVARCHAR"/>
+        <result column="url" property="url" jdbcType="VARCHAR"/>
+        <result column="pig" property="pig" jdbcType="VARCHAR"/>
+        <result column="level" property="level" jdbcType="TINYINT"/>
+        <result column="type" property="type" jdbcType="VARCHAR"/>
+        <result column="create_time" property="createTime" jdbcType="TIMESTAMP"/>
+        <result column="update_time" property="updateTime" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <!-- 基础SQL片段 -->
+    <sql id="Base_Column_List">
+        id, name, content, url, pig, level, type, create_time, update_time
+    </sql>
+
+    <!-- 根据ID查询资源 -->
+    <select id="selectById" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM resource
+        WHERE id = #{id}
+    </select>
+
+    <!-- 查询所有资源 -->
+    <select id="selectAll" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM resource
+        ORDER BY id DESC
+    </select>
+
+    <!-- 根据名称模糊查询资源 -->
+    <select id="selectByNameLike" parameterType="java.lang.String" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM resource
+        WHERE name LIKE CONCAT('%', #{name}, '%')
+        ORDER BY id DESC
+    </select>
+
+    <!-- 根据内容模糊查询资源 -->
+    <select id="selectByContentLike" parameterType="java.lang.String" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM resource
+        WHERE content LIKE CONCAT('%', #{content}, '%')
+        ORDER BY id DESC
+    </select>
+
+    <!-- 根据层级查询资源 -->
+    <select id="selectByLevel" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM resource
+        WHERE level = #{level}
+        ORDER BY id DESC
+    </select>
+
+    <!-- 根据类型查询资源 -->
+    <select id="selectByType" parameterType="java.lang.String" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM resource
+        WHERE type = #{type}
+        ORDER BY id DESC
+    </select>
+
+    <!-- 根据名称或内容模糊查询资源 -->
+    <select id="selectByNameOrContentLike" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM resource
+        WHERE name LIKE CONCAT('%', #{name}, '%') OR content LIKE CONCAT('%', #{content}, '%')
+        ORDER BY id DESC
+    </select>
+
+    <!-- 高级搜索：在名称和内容中搜索关键词，支持部分匹配 -->
+    <select id="selectByAdvancedSearch" parameterType="java.lang.String" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM resource
+        WHERE LOWER(name) LIKE LOWER(CONCAT('%', #{searchTerm}, '%'))
+           OR LOWER(content) LIKE LOWER(CONCAT('%', #{searchTerm}, '%'))
+        ORDER BY
+            CASE
+                WHEN LOWER(name) = LOWER(#{searchTerm}) THEN 1
+                WHEN LOWER(name) LIKE LOWER(CONCAT('%', #{searchTerm}, '%')) THEN 2
+                WHEN LOWER(content) LIKE LOWER(CONCAT('%', #{searchTerm}, '%')) THEN 3
+                ELSE 4
+            END,
+            id ASC
+    </select>
+
+    <!-- 高级搜索带分页 -->
+    <select id="selectByAdvancedSearchWithPagination" parameterType="java.lang.String" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM resource
+        WHERE LOWER(name) LIKE LOWER(CONCAT('%', #{searchTerm}, '%'))
+           OR LOWER(content) LIKE LOWER(CONCAT('%', #{searchTerm}, '%'))
+        ORDER BY
+            CASE
+                WHEN LOWER(name) = LOWER(#{searchTerm}) THEN 1
+                WHEN LOWER(name) LIKE LOWER(CONCAT('%', #{searchTerm}, '%')) THEN 2
+                WHEN LOWER(content) LIKE LOWER(CONCAT('%', #{searchTerm}, '%')) THEN 3
+                ELSE 4
+            END,
+            id ASC
+    </select>
+
+    <!-- 根据多个关键词搜索（用于分词搜索） -->
+    <select id="selectByMultipleTerms" resultMap="BaseResultMap">
+        SELECT DISTINCT
+        <include refid="Base_Column_List"/>
+        FROM resource
+        WHERE 1=1
+        <if test="term1 != null and term1 != ''">
+            AND (LOWER(name) LIKE LOWER(CONCAT('%', #{term1}, '%')) OR LOWER(content) LIKE LOWER(CONCAT('%', #{term1}, '%')))
+        </if>
+        <if test="term2 != null and term2 != ''">
+            AND (LOWER(name) LIKE LOWER(CONCAT('%', #{term2}, '%')) OR LOWER(content) LIKE LOWER(CONCAT('%', #{term2}, '%')))
+        </if>
+        <if test="term3 != null and term3 != ''">
+            AND (LOWER(name) LIKE LOWER(CONCAT('%', #{term3}, '%')) OR LOWER(content) LIKE LOWER(CONCAT('%', #{term3}, '%')))
+        </if>
+        ORDER BY id DESC
+    </select>
+
+    <!-- 根据层级和搜索词查询 -->
+    <select id="selectByLevelAndSearchTerm" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM resource
+        WHERE level = #{level}
+          AND (LOWER(name) LIKE LOWER(CONCAT('%', #{searchTerm}, '%'))
+           OR LOWER(content) LIKE LOWER(CONCAT('%', #{searchTerm}, '%')))
+        ORDER BY id DESC
+    </select>
+
+    <!-- 插入资源 -->
+    <insert id="insert" parameterType="org.example.entity.Resource" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO resource (name, content, url, pig, level, type, create_time, update_time)
+        VALUES (#{name}, #{content}, #{url}, #{pig}, #{level}, #{type}, NOW(), NOW())
+    </insert>
+
+    <!-- 更新资源 -->
+    <update id="updateById" parameterType="org.example.entity.Resource">
+        UPDATE resource
+        SET name = #{name},
+            content = #{content},
+            url = #{url},
+            pig = #{pig},
+            level = #{level},
+            type = #{type},
+            update_time = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <!-- 删除资源 -->
+    <delete id="deleteById" parameterType="java.lang.Integer">
+        DELETE FROM resource WHERE id = #{id}
+    </delete>
+
+    <!-- 检查资源是否存在 -->
+    <select id="existsById" parameterType="java.lang.Integer" resultType="boolean">
+        SELECT COUNT(*) > 0 FROM resource WHERE id = #{id}
+    </select>
+
+    <!-- 根据层级查询资源数量 -->
+    <select id="countByLevel" parameterType="java.lang.Integer" resultType="java.lang.Long">
+        SELECT COUNT(*) FROM resource WHERE level = #{level}
+    </select>
+
+</mapper>
