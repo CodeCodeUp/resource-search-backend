@@ -122,7 +122,7 @@ public class ResourceService {
     public PageInfo<ResourceResponse> getAllResourcesWithPagination(int page, int size) {
         logger.info("分页获取所有资源，页码: {}, 大小: {}", page, size);
 
-        PageHelper.startPage(page + 1, size); // PageHelper页码从1开始
+        PageHelper.startPage(page , size); // PageHelper页码从1开始
         List<Resource> resources = resourceMapper.selectAll();
 
         return convertToPageInfo(resources);
@@ -153,7 +153,7 @@ public class ResourceService {
         String searchTerm = searchRequest.getSearchTerm().trim();
 
         // 使用PageHelper进行分页
-        PageHelper.startPage(searchRequest.getPage() + 1, searchRequest.getSize());
+        PageHelper.startPage(searchRequest.getPage() , searchRequest.getSize());
         List<Resource> results = performAdvancedSearch(searchTerm, searchRequest.getLevel());
 
         return convertToPageInfo(results);
@@ -219,7 +219,7 @@ public class ResourceService {
     public PageInfo<ResourceResponse> getResourcesByLevelWithPagination(Integer level, int page, int size) {
         logger.info("分页获取层级 {} 的资源，页码: {}, 大小: {}", level, page, size);
 
-        PageHelper.startPage(page + 1, size);
+        PageHelper.startPage(page , size);
         List<Resource> resources = resourceMapper.selectByLevel(level);
 
         return convertToPageInfo(resources);
@@ -243,7 +243,7 @@ public class ResourceService {
     public PageInfo<ResourceResponse> getResourcesByTypeWithPagination(String type, int page, int size) {
         logger.info("分页获取类型 {} 的资源，页码: {}, 大小: {}", type, page, size);
 
-        PageHelper.startPage(page + 1, size);
+        PageHelper.startPage(page , size);
         List<Resource> resources = resourceMapper.selectByType(type);
 
         return convertToPageInfo(resources);
