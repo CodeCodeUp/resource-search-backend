@@ -50,4 +50,18 @@ logging:
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
 
+# QQ频道爬虫配置
+crawler:
+  qq-channel:
+    api-url: "https://pd.qq.com/qunng/guild/gotrpc/auth/trpc.qchannel.commreader.ComReader/GetGuildFeeds?bkn=1542735111"
+    cookie: "RK=cn0ZoLn/cb; ptcz=a0d378dbb20ead0b616760379518ca9bf966589da6e3d22dcf5162bd3c5a6525; uuid=144115351595185418; p_uin=o1985238626; _qpsvr_localtk=0.5378200200380262; pt4_token=oJHhtkAkTDLDk2BIzvUh7TeMNrsxKuvSu6yQ9jsPRSE_; p_skey=vKUtXrpcNjCot4tF2tBAgEFAZEvnYSRT9WvVd-OvegA_; uin=o1985238626; daid=823; _TDID_CK=1750208371327; 3503262795037d16=GAtfHv3L47Ksc5ARW9K4cTRVJHW9fJwGT9mulVRuoclnSHILRUaTZgN4uBS0yCbpJfBzIrFQNaksgCQiJM438gfcXvYJYttQhZyLK%2FBeErrJbb0B9BUzgJw1Wg6qsYr7ipTuvmdUfBhGmwlVJ1hYH1CqtJ7Kp20QWITsv%2FavVTSul2q7jl3VP7sD%2BuU%3D"
+    guild-number: "pd97631607"
+    get-type: 2
+    sort-option: 1
+    need-channel-list: false
+    need-top-info: false
+    max-pages: 1000
+    page-delay-seconds: 5
+    from-param: 7
+
 

@@ -178,4 +178,9 @@
         SELECT COUNT(*) FROM resource WHERE level = #{level}
     </select>
 
+    <!-- 根据URL检查资源是否存在 -->
+    <select id="existsByUrl" parameterType="java.lang.String" resultType="boolean">
+        SELECT COUNT(*) > 0 FROM resource WHERE url = #{url} and name = #{name}
+    </select>
+
 </mapper>

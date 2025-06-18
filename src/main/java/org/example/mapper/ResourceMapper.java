@@ -92,4 +92,9 @@ public interface ResourceMapper {
      * 根据层级查询资源数量
      */
     Long countByLevel(@Param("level") Integer level);
+
+    /**
+     * 根据URL检查资源是否存在
+     */
+    boolean existsByUrl(@Param("url") String url, @Param("name") String name);
 }
