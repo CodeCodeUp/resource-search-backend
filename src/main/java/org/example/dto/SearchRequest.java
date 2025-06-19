@@ -16,6 +16,10 @@ public class SearchRequest {
 
     private String level; // Optional filter by level
 
+    private String type; // Optional filter by content type (movie/novel/anime/shortdrama)
+
+    private String searchMode = "multi"; // Search mode: "multi" (name+content) or "name" (name only)
+
     // Default constructor
     public SearchRequest() {}
 
@@ -30,6 +34,25 @@ public class SearchRequest {
         this.page = page;
         this.size = size;
         this.level = level;
+    }
+
+    // Constructor with all fields including type
+    public SearchRequest(String searchTerm, int page, int size, String level, String type) {
+        this.searchTerm = searchTerm;
+        this.page = page;
+        this.size = size;
+        this.level = level;
+        this.type = type;
+    }
+
+    // Constructor with all fields including type and search mode
+    public SearchRequest(String searchTerm, int page, int size, String level, String type, String searchMode) {
+        this.searchTerm = searchTerm;
+        this.page = page;
+        this.size = size;
+        this.level = level;
+        this.type = type;
+        this.searchMode = searchMode;
     }
 
     // Getters and Setters
@@ -65,6 +88,22 @@ public class SearchRequest {
         this.level = level;
     }
 
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public String getSearchMode() {
+        return searchMode;
+    }
+
+    public void setSearchMode(String searchMode) {
+        this.searchMode = searchMode;
+    }
+
     @Override
     public String toString() {
         return "SearchRequest{" +
@@ -72,6 +111,8 @@ public class SearchRequest {
                 ", page=" + page +
                 ", size=" + size +
                 ", level='" + level + '\'' +
+                ", type='" + type + '\'' +
+                ", searchMode='" + searchMode + '\'' +
                 '}';
     }
 }

@@ -11,8 +11,15 @@ public enum ResourceType {
     VARIETY("movie", "综艺"),
     NOVEL("novel", "小说"),
     ANIME("anime", "动漫"),
-    SHORT_DRAMA("shortdrama", "短剧");
-    
+    SHORT_DRAMA("shortdrama", "短剧"),
+    TOOL("study","资料"),
+    DOCUMENT("study","PPT"),
+    GUIDE("study","教程"),
+    GAME("game","游戏"),
+    WALLPAPER("wallpaper","壁纸"),
+    OTHER("其他","其他类型")
+
+            ;
     private final String code;
     private final String description;
     

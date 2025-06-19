@@ -172,11 +172,17 @@ public class QQChannelCrawlerService {
                     QQChannelResource resource = extractInfoFromText(text, imageUrl);
 
                     if (resource != null && isValidResource(resource)) {
-                        // 检查URL是否已存在
+
                         if (resourceMapper.existsByTime(resourceTime)) {
                             logger.info("发现重复资源: {}, 停止爬取", resource.getLink());
                             foundDuplicate = true;
                             break;
+                        }
+
+                        // 检查URL是否已存在
+                        if (resourceMapper.existsByUrl(resource.getLink())) {
+                            logger.info("发现重复资源: {}, 跳过", resource.getLink());
+                            continue;
                         }
 
                         // 保存到数据库

@@ -117,11 +117,34 @@ public class ResourceController {
 
 
     /**
-     * 高级搜索资源（分页）
+     * 统一搜索资源接口（分页）
+     * 支持多字段搜索、模糊匹配、分词搜索和类型过滤
+     * 支持按名称和内容搜索（分词搜索仅搜索名称字段）
+     * 支持按层级和内容类型过滤
+     */
+    @PostMapping("/search")
+    public ResponseEntity<PageInfo<ResourceResponse>> searchResources(@Valid @RequestBody SearchRequest searchRequest) {
+        logger.info("API调用：统一搜索资源，搜索词: {}, 页码: {}, 大小: {}, 层级: {}, 类型: {}",
+                   searchRequest.getSearchTerm(), searchRequest.getPage(), searchRequest.getSize(),
+                   searchRequest.getLevel(), searchRequest.getType());
+
+        try {
+            PageInfo<ResourceResponse> results = resourceService.searchResourcesWithPagination(searchRequest);
+            return ResponseEntity.ok(results);
+        } catch (Exception e) {
+            logger.error("搜索资源失败: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    /**
+     * 高级搜索资源（分页）- 保持向后兼容性
+     * @deprecated 请使用 /search 接口
      */
     @PostMapping("/search/page")
+    @Deprecated
     public ResponseEntity<PageInfo<ResourceResponse>> searchResourcesWithPagination(@Valid @RequestBody SearchRequest searchRequest) {
-        logger.info("API调用：分页搜索资源，搜索词: {}, 页码: {}, 大小: {}",
+        logger.info("API调用：分页搜索资源（已弃用），搜索词: {}, 页码: {}, 大小: {}",
                    searchRequest.getSearchTerm(), searchRequest.getPage(), searchRequest.getSize());
 
         try {
@@ -133,18 +156,67 @@ public class ResourceController {
         }
     }
 
+    /**
+     * GET方式搜索资源（分页）- 提供RESTful接口
+     * 支持多字段搜索、模糊匹配、分词搜索和类型过滤
+     * 支持搜索模式：multi（名称+内容）或 name（仅名称）
+     */
+    @GetMapping("/search")
+    public ResponseEntity<PageInfo<ResourceResponse>> searchResourcesGet(
+            @RequestParam String searchTerm,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String level,
+            @RequestParam(required = false) String type,
+            @RequestParam(defaultValue = "multi") String searchMode) {
+        logger.info("API调用：GET搜索资源，搜索词: {}, 页码: {}, 大小: {}, 层级: {}, 类型: {}, 搜索模式: {}",
+                   searchTerm, page, size, level, type, searchMode);
+
+        try {
+            SearchRequest searchRequest = new SearchRequest(searchTerm, page, size, level, type, searchMode);
+            PageInfo<ResourceResponse> results = resourceService.searchResourcesWithPagination(searchRequest);
+            return ResponseEntity.ok(results);
+        } catch (Exception e) {
+            logger.error("GET搜索资源失败: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
 
 
 
     /**
-     * 根据层级获取资源（分页）
+     * 根据层级获取资源（分页）- 使用统一搜索接口
      */
-    @GetMapping("/level/{level}/page")
-    public ResponseEntity<PageInfo<ResourceResponse>> getResourcesByLevelWithPagination(
+    @GetMapping("/level/{level}")
+    public ResponseEntity<PageInfo<ResourceResponse>> getResourcesByLevel(
             @PathVariable Integer level,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         logger.info("API调用：分页根据层级获取资源，层级: {}, 页码: {}, 大小: {}", level, page, size);
+
+        try {
+            // 使用统一搜索接口，空搜索词表示获取所有该层级的资源
+            SearchRequest searchRequest = new SearchRequest("", page, size, level.toString(), null);
+            PageInfo<ResourceResponse> resources = resourceService.searchResourcesWithPagination(searchRequest);
+            return ResponseEntity.ok(resources);
+        } catch (Exception e) {
+            logger.error("分页根据层级获取资源失败: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    /**
+     * 根据层级获取资源（分页）- 保持向后兼容性
+     * @deprecated 请使用 /level/{level} 接口
+     */
+    @GetMapping("/level/{level}/page")
+    @Deprecated
+    public ResponseEntity<PageInfo<ResourceResponse>> getResourcesByLevelWithPagination(
+            @PathVariable Integer level,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        logger.info("API调用：分页根据层级获取资源（已弃用），层级: {}, 页码: {}, 大小: {}", level, page, size);
 
         try {
             PageInfo<ResourceResponse> resources = resourceService.getResourcesByLevelWithPagination(level, page, size);
@@ -157,14 +229,37 @@ public class ResourceController {
 
 
     /**
-     * 根据类型获取资源（分页）
+     * 根据类型获取资源（分页）- 使用统一搜索接口
      */
-    @GetMapping("/type/{type}/page")
-    public ResponseEntity<PageInfo<ResourceResponse>> getResourcesByTypeWithPagination(
+    @GetMapping("/type/{type}")
+    public ResponseEntity<PageInfo<ResourceResponse>> getResourcesByType(
             @PathVariable String type,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         logger.info("API调用：分页根据类型获取资源，类型: {}, 页码: {}, 大小: {}", type, page, size);
+
+        try {
+            // 使用统一搜索接口，空搜索词表示获取所有该类型的资源
+            SearchRequest searchRequest = new SearchRequest("", page, size, null, type);
+            PageInfo<ResourceResponse> resources = resourceService.searchResourcesWithPagination(searchRequest);
+            return ResponseEntity.ok(resources);
+        } catch (Exception e) {
+            logger.error("分页根据类型获取资源失败: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    /**
+     * 根据类型获取资源（分页）- 保持向后兼容性
+     * @deprecated 请使用 /type/{type} 接口
+     */
+    @GetMapping("/type/{type}/page")
+    @Deprecated
+    public ResponseEntity<PageInfo<ResourceResponse>> getResourcesByTypeWithPagination(
+            @PathVariable String type,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        logger.info("API调用：分页根据类型获取资源（已弃用），类型: {}, 页码: {}, 大小: {}", type, page, size);
 
         try {
             PageInfo<ResourceResponse> resources = resourceService.getResourcesByTypeWithPagination(type, page, size);

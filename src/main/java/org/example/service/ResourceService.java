@@ -106,17 +106,7 @@ public class ResourceService {
         return false;
     }
 
-    /**
-     * 获取所有资源（不分页）
-     */
-    public List<ResourceResponse> getAllResources() {
-        logger.info("获取所有资源");
 
-        List<Resource> resources = resourceMapper.selectAll();
-        return resources.stream()
-                .map(this::convertToResponse)
-                .collect(Collectors.toList());
-    }
 
     /**
      * 获取所有资源（分页）
@@ -130,41 +120,111 @@ public class ResourceService {
         return convertToPageInfo(resources);
     }
 
-    /**
-     * 高级搜索功能：支持模糊匹配和分词搜索（不分页）
-     * 例如：搜索"四六级答案"，如果没有完全匹配，会尝试匹配"四六级"、"答案"等分词
-     */
-    public List<ResourceResponse> searchResources(SearchRequest searchRequest) {
-        logger.info("执行高级搜索，搜索词: {}", searchRequest.getSearchTerm());
 
-        String searchTerm = searchRequest.getSearchTerm().trim();
-        List<Resource> results = performAdvancedSearch(searchTerm, searchRequest.getLevel());
-
-        return results.stream()
-                .map(this::convertToResponse)
-                .collect(Collectors.toList());
-    }
 
     /**
-     * 高级搜索功能：支持模糊匹配和分词搜索（分页）
+     * 统一搜索功能：支持多字段搜索、模糊匹配、分词搜索和类型过滤（分页）
+     * 支持按名称和内容搜索（分词搜索仅搜索名称字段）
+     * 支持按层级和内容类型过滤
+     * 支持搜索模式：multi（名称+内容）或 name（仅名称）
      */
     public PageInfo<ResourceResponse> searchResourcesWithPagination(SearchRequest searchRequest) {
-        logger.info("执行分页高级搜索，搜索词: {}, 页码: {}, 大小: {}",
-                   searchRequest.getSearchTerm(), searchRequest.getPage(), searchRequest.getSize());
+        logger.info("执行分页高级搜索，搜索词: {}, 页码: {}, 大小: {}, 层级: {}, 类型: {}, 搜索模式: {}",
+                   searchRequest.getSearchTerm(), searchRequest.getPage(), searchRequest.getSize(),
+                   searchRequest.getLevel(), searchRequest.getType(), searchRequest.getSearchMode());
 
         String searchTerm = searchRequest.getSearchTerm().trim();
+        String searchMode = searchRequest.getSearchMode() != null ? searchRequest.getSearchMode() : "multi";
 
         // 使用PageHelper进行分页
         PageHelper.startPage(searchRequest.getPage() , searchRequest.getSize());
-        List<Resource> results = performAdvancedSearch(searchTerm, searchRequest.getLevel());
+        List<Resource> results = performAdvancedSearch(searchTerm, searchRequest.getLevel(), searchRequest.getType(), searchMode);
 
         return convertToPageInfo(results);
     }
 
     /**
      * 执行高级搜索的核心逻辑
+     * 支持层级和类型过滤，支持搜索模式选择
      */
-    private List<Resource> performAdvancedSearch(String searchTerm, String levelFilter) {
+    private List<Resource> performAdvancedSearch(String searchTerm, String levelFilter, String typeFilter, String searchMode) {
+        List<Resource> results = new ArrayList<>();
+
+        try {
+            // 如果搜索词为空，获取所有资源（用于按层级或类型过滤）
+            if (searchTerm.isEmpty()) {
+                results = resourceMapper.selectAll();
+            } else {
+                // 根据搜索模式选择搜索方法
+                if ("name".equals(searchMode)) {
+                    // 仅在名称字段中搜索
+                    results = performNameOnlySearch(searchTerm);
+                } else {
+                    // 默认多字段搜索（名称+内容）
+                    results = performMultiFieldSearch(searchTerm);
+                }
+            }
+
+            // 根据层级过滤
+            if (levelFilter != null && !levelFilter.trim().isEmpty()) {
+                results = results.stream()
+                        .filter(resource -> resource.getLevel().equals(Integer.parseInt(levelFilter)))
+                        .collect(Collectors.toList());
+            }
+
+            // 根据类型过滤
+            if (typeFilter != null && !typeFilter.trim().isEmpty()) {
+                results = results.stream()
+                        .filter(resource -> typeFilter.equalsIgnoreCase(resource.getType()))
+                        .collect(Collectors.toList());
+            }
+
+            logger.info("搜索完成，找到 {} 个结果", results.size());
+
+        } catch (Exception e) {
+            logger.error("搜索过程中出现错误: {}", e.getMessage(), e);
+            // 降级到简单搜索
+            results = resourceMapper.selectByNameOrContentLike(searchTerm, searchTerm);
+        }
+
+        return results;
+    }
+
+    /**
+     * 执行仅名称字段搜索
+     */
+    private List<Resource> performNameOnlySearch(String searchTerm) {
+        List<Resource> results = new ArrayList<>();
+
+        try {
+            // 首先尝试完整搜索词的名称搜索
+            results = resourceMapper.selectByNameOnlyAdvancedSearch(searchTerm);
+
+            // 如果没有结果且搜索词包含空格，尝试分词搜索
+            if (results.isEmpty() && searchTerm.contains(" ")) {
+                logger.info("完整搜索词无结果，尝试名称分词搜索");
+                results = performNameOnlyTokenizedSearch(searchTerm);
+            }
+
+            // 如果仍然没有结果，尝试中文分词（简单实现）
+            if (results.isEmpty() && searchTerm.length() > 1) {
+                logger.info("尝试名称中文字符分词搜索");
+                results = performNameOnlyChineseTokenizedSearch(searchTerm);
+            }
+
+        } catch (Exception e) {
+            logger.error("名称搜索过程中出现错误: {}", e.getMessage(), e);
+            // 降级到简单名称搜索
+            results = resourceMapper.selectByNameLike(searchTerm);
+        }
+
+        return results;
+    }
+
+    /**
+     * 执行多字段搜索（名称+内容）
+     */
+    private List<Resource> performMultiFieldSearch(String searchTerm) {
         List<Resource> results = new ArrayList<>();
 
         try {
@@ -183,17 +243,8 @@ public class ResourceService {
                 results = performChineseTokenizedSearch(searchTerm);
             }
 
-            // 根据层级过滤
-            if (levelFilter != null && !levelFilter.trim().isEmpty()) {
-                results = results.stream()
-                        .filter(resource -> resource.getLevel().equals(Integer.parseInt(levelFilter)))
-                        .collect(Collectors.toList());
-            }
-
-            logger.info("搜索完成，找到 {} 个结果", results.size());
-
         } catch (Exception e) {
-            logger.error("搜索过程中出现错误: {}", e.getMessage(), e);
+            logger.error("多字段搜索过程中出现错误: {}", e.getMessage(), e);
             // 降级到简单搜索
             results = resourceMapper.selectByNameOrContentLike(searchTerm, searchTerm);
         }
@@ -203,17 +254,7 @@ public class ResourceService {
 
 
 
-    /**
-     * 根据层级获取资源（不分页）
-     */
-    public List<ResourceResponse> getResourcesByLevel(Integer level) {
-        logger.info("获取层级 {} 的资源", level);
 
-        List<Resource> resources = resourceMapper.selectByLevel(level);
-        return resources.stream()
-                .map(this::convertToResponse)
-                .collect(Collectors.toList());
-    }
 
     /**
      * 根据层级获取资源（分页）
@@ -227,17 +268,7 @@ public class ResourceService {
         return convertToPageInfo(resources);
     }
 
-    /**
-     * 根据类型获取资源（不分页）
-     */
-    public List<ResourceResponse> getResourcesByType(String type) {
-        logger.info("获取类型 {} 的资源", type);
 
-        List<Resource> resources = resourceMapper.selectByType(type);
-        return resources.stream()
-                .map(this::convertToResponse)
-                .collect(Collectors.toList());
-    }
 
     /**
      * 根据类型获取资源（分页）
@@ -301,6 +332,64 @@ public class ResourceService {
             for (int i = 0; i <= searchTerm.length() - 3; i++) {
                 String subTerm = searchTerm.substring(i, i + 3);
                 List<Resource> subResults = resourceMapper.selectByAdvancedSearch(subTerm);
+                results.addAll(subResults);
+            }
+        }
+
+        // 去重
+        return results.stream().distinct().collect(Collectors.toList());
+    }
+
+    /**
+     * 执行仅名称字段的分词搜索（英文空格分词）
+     */
+    private List<Resource> performNameOnlyTokenizedSearch(String searchTerm) {
+        String[] terms = searchTerm.split("\\s+");
+        List<Resource> results = new ArrayList<>();
+
+        // 使用多个关键词搜索
+        if (terms.length >= 1) {
+            String term1 = terms.length > 0 ? terms[0] : null;
+            String term2 = terms.length > 1 ? terms[1] : null;
+            String term3 = terms.length > 2 ? terms[2] : null;
+
+            results = resourceMapper.selectByNameOnlyMultipleTerms(term1, term2, term3);
+        }
+
+        // 如果多词搜索无结果，尝试单个词搜索
+        if (results.isEmpty()) {
+            for (String term : terms) {
+                if (term.trim().length() > 0) {
+                    List<Resource> termResults = resourceMapper.selectByNameOnlyAdvancedSearch(term.trim());
+                    results.addAll(termResults);
+                }
+            }
+            // 去重
+            results = results.stream().distinct().collect(Collectors.toList());
+        }
+
+        return results;
+    }
+
+    /**
+     * 执行仅名称字段的中文分词搜索（简单实现）
+     */
+    private List<Resource> performNameOnlyChineseTokenizedSearch(String searchTerm) {
+        List<Resource> results = new ArrayList<>();
+
+        // 简单的中文分词：按2-3个字符分组
+        if (searchTerm.length() >= 4) {
+            // 尝试2字分词
+            for (int i = 0; i <= searchTerm.length() - 2; i++) {
+                String subTerm = searchTerm.substring(i, i + 2);
+                List<Resource> subResults = resourceMapper.selectByNameOnlyAdvancedSearch(subTerm);
+                results.addAll(subResults);
+            }
+
+            // 尝试3字分词
+            for (int i = 0; i <= searchTerm.length() - 3; i++) {
+                String subTerm = searchTerm.substring(i, i + 3);
+                List<Resource> subResults = resourceMapper.selectByNameOnlyAdvancedSearch(subTerm);
                 results.addAll(subResults);
             }
         }

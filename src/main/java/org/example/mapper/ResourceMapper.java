@@ -69,6 +69,18 @@ public interface ResourceMapper {
     List<Resource> selectByLevelAndSearchTerm(@Param("level") Integer level, @Param("searchTerm") String searchTerm);
 
     /**
+     * 仅在名称字段中进行高级搜索
+     */
+    List<Resource> selectByNameOnlyAdvancedSearch(@Param("searchTerm") String searchTerm);
+
+    /**
+     * 仅在名称字段中根据多个关键词搜索（用于分词搜索）
+     */
+    List<Resource> selectByNameOnlyMultipleTerms(@Param("term1") String term1,
+                                                @Param("term2") String term2,
+                                                @Param("term3") String term3);
+
+    /**
      * 插入资源
      */
     int insert(Resource resource);
@@ -96,7 +108,7 @@ public interface ResourceMapper {
     /**
      * 根据URL检查资源是否存在
      */
-    boolean existsByUrl(@Param("url") String url, @Param("name") String name);
+    boolean existsByUrl(@Param("url") String url);
 
     /**
      * 根据URL检查资源是否存在
