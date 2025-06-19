@@ -225,4 +225,87 @@
         SELECT COUNT(*) > 0 FROM resource WHERE resource_time = #{time}
     </select>
 
+    <!-- 统一搜索接口：支持搜索词、层级和类型过滤（数据库层面实现） -->
+    <select id="selectByUnifiedSearch" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM resource
+        WHERE 1=1
+        <if test="searchTerm != null and searchTerm != ''">
+            <choose>
+                <when test="searchMode == 'name'">
+                    AND LOWER(name) LIKE LOWER(CONCAT('%', #{searchTerm}, '%'))
+                </when>
+                <otherwise>
+                    AND (LOWER(name) LIKE LOWER(CONCAT('%', #{searchTerm}, '%'))
+                         OR LOWER(content) LIKE LOWER(CONCAT('%', #{searchTerm}, '%')))
+                </otherwise>
+            </choose>
+        </if>
+        <if test="level != null">
+            AND level = #{level}
+        </if>
+        <if test="type != null and type != ''">
+            AND type = #{type}
+        </if>
+        ORDER BY
+        <if test="searchTerm != null and searchTerm != ''">
+            CASE
+                WHEN LOWER(name) = LOWER(#{searchTerm}) THEN 1
+                WHEN LOWER(name) LIKE LOWER(CONCAT(#{searchTerm}, '%')) THEN 2
+                WHEN LOWER(name) LIKE LOWER(CONCAT('%', #{searchTerm}, '%')) THEN 3
+                <if test="searchMode != 'name'">
+                WHEN LOWER(content) LIKE LOWER(CONCAT('%', #{searchTerm}, '%')) THEN 4
+                </if>
+                ELSE 5
+            END,
+        </if>
+        id DESC
+    </select>
+
+    <!-- 统一搜索接口：支持多个关键词、层级和类型过滤（数据库层面实现） -->
+    <select id="selectByUnifiedMultipleTermsSearch" resultMap="BaseResultMap">
+        SELECT DISTINCT
+        <include refid="Base_Column_List"/>
+        FROM resource
+        WHERE 1=1
+        <if test="term1 != null and term1 != ''">
+            <choose>
+                <when test="searchMode == 'name'">
+                    AND LOWER(name) LIKE LOWER(CONCAT('%', #{term1}, '%'))
+                </when>
+                <otherwise>
+                    AND (LOWER(name) LIKE LOWER(CONCAT('%', #{term1}, '%')) OR LOWER(content) LIKE LOWER(CONCAT('%', #{term1}, '%')))
+                </otherwise>
+            </choose>
+        </if>
+        <if test="term2 != null and term2 != ''">
+            <choose>
+                <when test="searchMode == 'name'">
+                    AND LOWER(name) LIKE LOWER(CONCAT('%', #{term2}, '%'))
+                </when>
+                <otherwise>
+                    AND (LOWER(name) LIKE LOWER(CONCAT('%', #{term2}, '%')) OR LOWER(content) LIKE LOWER(CONCAT('%', #{term2}, '%')))
+                </otherwise>
+            </choose>
+        </if>
+        <if test="term3 != null and term3 != ''">
+            <choose>
+                <when test="searchMode == 'name'">
+                    AND LOWER(name) LIKE LOWER(CONCAT('%', #{term3}, '%'))
+                </when>
+                <otherwise>
+                    AND (LOWER(name) LIKE LOWER(CONCAT('%', #{term3}, '%')) OR LOWER(content) LIKE LOWER(CONCAT('%', #{term3}, '%')))
+                </otherwise>
+            </choose>
+        </if>
+        <if test="level != null">
+            AND level = #{level}
+        </if>
+        <if test="type != null and type != ''">
+            AND type = #{type}
+        </if>
+        ORDER BY id DESC
+    </select>
+
 </mapper>

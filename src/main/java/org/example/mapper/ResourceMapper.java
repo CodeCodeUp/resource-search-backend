@@ -114,4 +114,24 @@ public interface ResourceMapper {
      * 根据URL检查资源是否存在
      */
     boolean existsByTime(@Param("time") int time);
+
+    /**
+     * 统一搜索接口：支持搜索词、层级和类型过滤（数据库层面实现）
+     * 支持多字段搜索和仅名称搜索
+     */
+    List<Resource> selectByUnifiedSearch(@Param("searchTerm") String searchTerm,
+                                        @Param("level") Integer level,
+                                        @Param("type") String type,
+                                        @Param("searchMode") String searchMode);
+
+    /**
+     * 统一搜索接口：支持多个关键词、层级和类型过滤（数据库层面实现）
+     * 用于分词搜索
+     */
+    List<Resource> selectByUnifiedMultipleTermsSearch(@Param("term1") String term1,
+                                                     @Param("term2") String term2,
+                                                     @Param("term3") String term3,
+                                                     @Param("level") Integer level,
+                                                     @Param("type") String type,
+                                                     @Param("searchMode") String searchMode);
 }

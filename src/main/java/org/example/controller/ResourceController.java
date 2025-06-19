@@ -137,50 +137,7 @@ public class ResourceController {
         }
     }
 
-    /**
-     * 高级搜索资源（分页）- 保持向后兼容性
-     * @deprecated 请使用 /search 接口
-     */
-    @PostMapping("/search/page")
-    @Deprecated
-    public ResponseEntity<PageInfo<ResourceResponse>> searchResourcesWithPagination(@Valid @RequestBody SearchRequest searchRequest) {
-        logger.info("API调用：分页搜索资源（已弃用），搜索词: {}, 页码: {}, 大小: {}",
-                   searchRequest.getSearchTerm(), searchRequest.getPage(), searchRequest.getSize());
 
-        try {
-            PageInfo<ResourceResponse> results = resourceService.searchResourcesWithPagination(searchRequest);
-            return ResponseEntity.ok(results);
-        } catch (Exception e) {
-            logger.error("分页搜索资源失败: {}", e.getMessage(), e);
-            return ResponseEntity.internalServerError().build();
-        }
-    }
-
-    /**
-     * GET方式搜索资源（分页）- 提供RESTful接口
-     * 支持多字段搜索、模糊匹配、分词搜索和类型过滤
-     * 支持搜索模式：multi（名称+内容）或 name（仅名称）
-     */
-    @GetMapping("/search")
-    public ResponseEntity<PageInfo<ResourceResponse>> searchResourcesGet(
-            @RequestParam String searchTerm,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(required = false) String level,
-            @RequestParam(required = false) String type,
-            @RequestParam(defaultValue = "multi") String searchMode) {
-        logger.info("API调用：GET搜索资源，搜索词: {}, 页码: {}, 大小: {}, 层级: {}, 类型: {}, 搜索模式: {}",
-                   searchTerm, page, size, level, type, searchMode);
-
-        try {
-            SearchRequest searchRequest = new SearchRequest(searchTerm, page, size, level, type, searchMode);
-            PageInfo<ResourceResponse> results = resourceService.searchResourcesWithPagination(searchRequest);
-            return ResponseEntity.ok(results);
-        } catch (Exception e) {
-            logger.error("GET搜索资源失败: {}", e.getMessage(), e);
-            return ResponseEntity.internalServerError().build();
-        }
-    }
 
 
 
@@ -206,27 +163,6 @@ public class ResourceController {
         }
     }
 
-    /**
-     * 根据层级获取资源（分页）- 保持向后兼容性
-     * @deprecated 请使用 /level/{level} 接口
-     */
-    @GetMapping("/level/{level}/page")
-    @Deprecated
-    public ResponseEntity<PageInfo<ResourceResponse>> getResourcesByLevelWithPagination(
-            @PathVariable Integer level,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-        logger.info("API调用：分页根据层级获取资源（已弃用），层级: {}, 页码: {}, 大小: {}", level, page, size);
-
-        try {
-            PageInfo<ResourceResponse> resources = resourceService.getResourcesByLevelWithPagination(level, page, size);
-            return ResponseEntity.ok(resources);
-        } catch (Exception e) {
-            logger.error("分页根据层级获取资源失败: {}", e.getMessage(), e);
-            return ResponseEntity.internalServerError().build();
-        }
-    }
-
 
     /**
      * 根据类型获取资源（分页）- 使用统一搜索接口
@@ -242,27 +178,6 @@ public class ResourceController {
             // 使用统一搜索接口，空搜索词表示获取所有该类型的资源
             SearchRequest searchRequest = new SearchRequest("", page, size, null, type);
             PageInfo<ResourceResponse> resources = resourceService.searchResourcesWithPagination(searchRequest);
-            return ResponseEntity.ok(resources);
-        } catch (Exception e) {
-            logger.error("分页根据类型获取资源失败: {}", e.getMessage(), e);
-            return ResponseEntity.internalServerError().build();
-        }
-    }
-
-    /**
-     * 根据类型获取资源（分页）- 保持向后兼容性
-     * @deprecated 请使用 /type/{type} 接口
-     */
-    @GetMapping("/type/{type}/page")
-    @Deprecated
-    public ResponseEntity<PageInfo<ResourceResponse>> getResourcesByTypeWithPagination(
-            @PathVariable String type,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-        logger.info("API调用：分页根据类型获取资源（已弃用），类型: {}, 页码: {}, 大小: {}", type, page, size);
-
-        try {
-            PageInfo<ResourceResponse> resources = resourceService.getResourcesByTypeWithPagination(type, page, size);
             return ResponseEntity.ok(resources);
         } catch (Exception e) {
             logger.error("分页根据类型获取资源失败: {}", e.getMessage(), e);

@@ -5,8 +5,7 @@ import javax.validation.constraints.Min;
 
 public class SearchRequest {
 
-    @NotBlank(message = "Search term is required")
-    private String searchTerm;
+    private String searchTerm = ""; // Allow empty search term for filtering-only queries
 
     @Min(value = 0, message = "Page number must be non-negative")
     private int page = 0;
