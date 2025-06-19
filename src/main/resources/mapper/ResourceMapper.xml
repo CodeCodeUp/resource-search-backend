@@ -11,13 +11,14 @@
         <result column="pig" property="pig" jdbcType="VARCHAR"/>
         <result column="level" property="level" jdbcType="TINYINT"/>
         <result column="type" property="type" jdbcType="VARCHAR"/>
+        <result column="resource_time" property="resourceTime" jdbcType="INTEGER"/>
         <result column="create_time" property="createTime" jdbcType="TIMESTAMP"/>
         <result column="update_time" property="updateTime" jdbcType="TIMESTAMP"/>
     </resultMap>
 
     <!-- 基础SQL片段 -->
     <sql id="Base_Column_List">
-        id, name, content, url, pig, level, type, create_time, update_time
+        id, name, content, url, pig, level, type, resource_time, create_time, update_time
     </sql>
 
     <!-- 根据ID查询资源 -->
@@ -77,7 +78,8 @@
         SELECT
         <include refid="Base_Column_List"/>
         FROM resource
-        WHERE name LIKE CONCAT('%', #{name}, '%') OR content LIKE CONCAT('%', #{content}, '%')
+        WHERE name LIKE CONCAT('%', #{name}, '%')
+        OR content LIKE CONCAT('%', #{content}, '%')
         ORDER BY id DESC
     </select>
 
@@ -146,8 +148,8 @@
 
     <!-- 插入资源 -->
     <insert id="insert" parameterType="org.example.entity.Resource" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO resource (name, content, url, pig, level, type, create_time, update_time)
-        VALUES (#{name}, #{content}, #{url}, #{pig}, #{level}, #{type}, NOW(), NOW())
+        INSERT INTO resource (name, content, url, pig, level, type, resource_time, create_time, update_time)
+        VALUES (#{name}, #{content}, #{url}, #{pig}, #{level}, #{type}, #{resourceTime}, NOW(), NOW())
     </insert>
 
     <!-- 更新资源 -->
@@ -159,6 +161,7 @@
             pig = #{pig},
             level = #{level},
             type = #{type},
+            resource_time = #{resourceTime},
             update_time = NOW()
         WHERE id = #{id}
     </update>
@@ -181,6 +184,11 @@
     <!-- 根据URL检查资源是否存在 -->
     <select id="existsByUrl" parameterType="java.lang.String" resultType="boolean">
         SELECT COUNT(*) > 0 FROM resource WHERE url = #{url} and name = #{name}
+    </select>
+
+    <!-- 根据时间戳检查资源是否存在 -->
+    <select id="existsByTime" parameterType="java.lang.Integer" resultType="boolean">
+        SELECT COUNT(*) > 0 FROM resource WHERE resource_time = #{time}
     </select>
 
 </mapper>

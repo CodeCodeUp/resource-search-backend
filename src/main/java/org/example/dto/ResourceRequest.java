@@ -25,17 +25,20 @@ public class ResourceRequest {
     @Size(max = 50, message = "资源类型不能超过50个字符")
     private String type;
 
+    private Integer resourceTime;
+
     // Default constructor
     public ResourceRequest() {}
 
     // Constructor with all fields
-    public ResourceRequest(String name, String content, String url, String pig, Integer level, String type) {
+    public ResourceRequest(String name, String content, String url, String pig, Integer level, String type, Integer resourceTime) {
         this.name = name;
         this.content = content;
         this.url = url;
         this.pig = pig;
         this.level = level;
         this.type = type;
+        this.resourceTime = resourceTime;
     }
 
     // Getters and Setters
@@ -87,6 +90,14 @@ public class ResourceRequest {
         this.type = type;
     }
 
+    public Integer getResourceTime() {
+        return resourceTime;
+    }
+
+    public void setResourceTime(Integer resourceTime) {
+        this.resourceTime = resourceTime;
+    }
+
     @Override
     public String toString() {
         return "ResourceRequest{" +
@@ -96,6 +107,7 @@ public class ResourceRequest {
                 ", pig='" + pig + '\'' +
                 ", level=" + level +
                 ", type='" + type + '\'' +
+                ", resourceTime=" + resourceTime +
                 '}';
     }
 }

@@ -40,6 +40,7 @@ public class ResourceService {
                 request.getLevel(),
                 request.getType()
         );
+        resource.setResourceTime(request.getResourceTime());
 
         int result = resourceMapper.insert(resource);
         if (result > 0) {
@@ -74,6 +75,7 @@ public class ResourceService {
             existingResource.setPig(request.getPig());
             existingResource.setLevel(request.getLevel());
             existingResource.setType(request.getType());
+            existingResource.setResourceTime(request.getResourceTime());
 
             int result = resourceMapper.updateById(existingResource);
             if (result > 0) {
@@ -348,6 +350,7 @@ public class ResourceService {
                 resource.getPig(),
                 resource.getLevel(),
                 resource.getType(),
+                resource.getResourceTime(),
                 resource.getCreateTime(),
                 resource.getUpdateTime()
         );

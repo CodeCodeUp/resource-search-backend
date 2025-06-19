@@ -97,4 +97,9 @@ public interface ResourceMapper {
      * 根据URL检查资源是否存在
      */
     boolean existsByUrl(@Param("url") String url, @Param("name") String name);
+
+    /**
+     * 根据URL检查资源是否存在
+     */
+    boolean existsByTime(@Param("time") int time);
 }

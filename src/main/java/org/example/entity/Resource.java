@@ -25,6 +25,8 @@ public class Resource {
 
     private String type;
 
+    private Integer resourceTime;
+
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createTime;
 
@@ -101,6 +103,14 @@ public class Resource {
         this.type = type;
     }
 
+    public Integer getResourceTime() {
+        return resourceTime;
+    }
+
+    public void setResourceTime(Integer resourceTime) {
+        this.resourceTime = resourceTime;
+    }
+
     public LocalDateTime getCreateTime() {
         return createTime;
     }
@@ -128,12 +138,13 @@ public class Resource {
                 Objects.equals(url, resource.url) &&
                 Objects.equals(pig, resource.pig) &&
                 Objects.equals(level, resource.level) &&
-                Objects.equals(type, resource.type);
+                Objects.equals(type, resource.type) &&
+                Objects.equals(resourceTime, resource.resourceTime);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, name, content, url, pig, level, type);
+        return Objects.hash(id, name, content, url, pig, level, type, resourceTime);
     }
 
     @Override
@@ -146,6 +157,7 @@ public class Resource {
                 ", pig='" + pig + '\'' +
                 ", level=" + level +
                 ", type='" + type + '\'' +
+                ", resourceTime=" + resourceTime +
                 ", createTime=" + createTime +
                 ", updateTime=" + updateTime +
                 '}';

@@ -159,19 +159,29 @@ public class QQChannelCrawlerService {
                         imageUrl = images.get(0).path("picUrl").asText();
                     }
 
+                    // 获取createTime时间戳
+                    Integer resourceTime = null;
+                    String createTimeStr = feed.path("createTime").asText();
+                    try {
+                        resourceTime = Integer.parseInt(createTimeStr);
+                    } catch (NumberFormatException e) {
+                        logger.warn("跳过，无法解析createTime: {}", createTimeStr);
+                        continue;
+                    }
+
                     QQChannelResource resource = extractInfoFromText(text, imageUrl);
 
                     if (resource != null && isValidResource(resource)) {
                         // 检查URL是否已存在
-                        if (resourceMapper.existsByUrl(resource.getLink(), resource.getTitle())) {
-                            logger.info("发现重复资源URL: {}, 停止爬取", resource.getLink());
+                        if (resourceMapper.existsByTime(resourceTime)) {
+                            logger.info("发现重复资源: {}, 停止爬取", resource.getLink());
                             foundDuplicate = true;
                             break;
                         }
 
                         // 保存到数据库
-                        saveResourceToDatabase(resource, resourceType);
-                        logger.info("保存资源: {}", resource.getTitle());
+                        saveResourceToDatabase(resource, resourceType, resourceTime);
+                        logger.info("保存资源: {} (时间戳: {})", resource.getTitle(), resourceTime);
                     }
                 }
 
@@ -300,7 +310,7 @@ public class QQChannelCrawlerService {
     /**
      * 保存资源到数据库
      */
-    private void saveResourceToDatabase(QQChannelResource qqResource, ResourceType resourceType) {
+    private void saveResourceToDatabase(QQChannelResource qqResource, ResourceType resourceType, Integer resourceTime) {
         try {
             Resource resource = new Resource();
             resource.setName(qqResource.getTitle());
@@ -309,10 +319,11 @@ public class QQChannelCrawlerService {
             resource.setPig(qqResource.getImageUrl());
             resource.setLevel(1); // 默认层级为1
             resource.setType(resourceType.getCode()); // 根据频道类型设置
+            resource.setResourceTime(resourceTime); // 设置资源时间戳
 
             int result = resourceMapper.insert(resource);
             if (result > 0) {
-                logger.info("成功保存资源到数据库: {} (类型: {})", resource.getName(), resourceType.getDescription());
+                logger.info("成功保存资源到数据库: {} (类型: {}, 时间戳: {})", resource.getName(), resourceType.getDescription(), resourceTime);
             } else {
                 logger.error("保存资源到数据库失败: {}", resource.getName());
             }
