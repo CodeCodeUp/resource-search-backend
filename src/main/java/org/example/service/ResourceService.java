@@ -6,6 +6,7 @@ import com.github.pagehelper.PageInfo;
 import org.example.dto.ResourceRequest;
 import org.example.dto.ResourceResponse;
 import org.example.dto.SearchRequest;
+import org.example.dto.SearchResponse;
 import org.example.entity.Resource;
 import org.example.mapper.ResourceMapper;
 import org.slf4j.Logger;
@@ -14,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -25,6 +27,25 @@ public class ResourceService {
 
     @Autowired
     private ResourceMapper resourceMapper;
+
+    /**
+     * 内部类：搜索结果和实际搜索词的包装
+     */
+    private static class SearchResultWithTerms {
+        private List<Resource> results;
+        private List<String> actualSearchTerms;
+        private String searchStrategy;
+
+        public SearchResultWithTerms(List<Resource> results, List<String> actualSearchTerms, String searchStrategy) {
+            this.results = results;
+            this.actualSearchTerms = actualSearchTerms;
+            this.searchStrategy = searchStrategy;
+        }
+
+        public List<Resource> getResults() { return results; }
+        public List<String> getActualSearchTerms() { return actualSearchTerms; }
+        public String getSearchStrategy() { return searchStrategy; }
+    }
 
     /**
      * 创建新资源
@@ -117,8 +138,9 @@ public class ResourceService {
      * 支持按名称和内容搜索（分词搜索仅搜索名称字段）
      * 支持按层级和内容类型过滤（数据库层面实现）
      * 支持搜索模式：multi（名称+内容）或 name（仅名称）
+     * 返回包含实际搜索词信息的SearchResponse
      */
-    public PageInfo<ResourceResponse> searchResourcesWithPagination(SearchRequest searchRequest) {
+    public SearchResponse searchResourcesWithSearchInfo(SearchRequest searchRequest) {
         logger.info("执行分页统一搜索，搜索词: {}, 页码: {}, 大小: {}, 层级: {}, 类型: {}, 搜索模式: {}",
                    searchRequest.getSearchTerm(), searchRequest.getPage(), searchRequest.getSize(),
                    searchRequest.getLevel(), searchRequest.getType(), searchRequest.getSearchMode());
@@ -130,43 +152,89 @@ public class ResourceService {
 
         // 使用PageHelper进行分页
         PageHelper.startPage(searchRequest.getPage(), searchRequest.getSize());
-        List<Resource> results = performUnifiedSearch(searchTerm, level, type, searchMode);
 
-        return convertToPageInfo(results);
+        // 执行搜索并收集实际使用的搜索词
+        SearchResultWithTerms searchResult = performUnifiedSearchWithTerms(searchTerm, level, type, searchMode);
+
+        // 转换为分页信息
+        PageInfo<ResourceResponse> pageInfo = convertToPageInfo(searchResult.getResults());
+
+        // 构建SearchResponse
+        return new SearchResponse(
+            pageInfo,
+            searchTerm, // 原始搜索词
+            searchResult.getActualSearchTerms(), // 实际使用的搜索词
+            searchResult.getSearchStrategy(), // 搜索策略
+            searchMode, // 搜索模式
+            level, // 层级过滤
+            type // 类型过滤
+        );
+    }
+
+    /**
+     * 保持向后兼容的方法
+     */
+    public PageInfo<ResourceResponse> searchResourcesWithPagination(SearchRequest searchRequest) {
+        SearchResponse searchResponse = searchResourcesWithSearchInfo(searchRequest);
+        return searchResponse.getPageInfo();
     }
 
     /**
      * 执行统一搜索的核心逻辑（数据库层面实现过滤）
      * 支持层级和类型过滤，支持搜索模式选择
+     * 返回搜索结果和实际使用的搜索词
      */
-    private List<Resource> performUnifiedSearch(String searchTerm, Integer level, String type, String searchMode) {
+    private SearchResultWithTerms performUnifiedSearchWithTerms(String searchTerm, Integer level, String type, String searchMode) {
         List<Resource> results = new ArrayList<>();
+        List<String> actualSearchTerms = new ArrayList<>();
+        String searchStrategy = "complete";
 
         try {
             // 首先尝试完整搜索词的统一搜索
             results = resourceMapper.selectByUnifiedSearch(searchTerm, level, type, searchMode);
+            if (!results.isEmpty()) {
+                actualSearchTerms.add(searchTerm);
+                searchStrategy = "complete";
+                logger.info("完整搜索词找到 {} 个结果", results.size());
+            }
 
             // 如果没有结果且搜索词包含空格，尝试分词搜索
             if (results.isEmpty() && searchTerm != null && searchTerm.contains(" ")) {
                 logger.info("完整搜索词无结果，尝试分词搜索");
-                results = performUnifiedTokenizedSearch(searchTerm, level, type, searchMode);
+                SearchResultWithTerms tokenizedResult = performUnifiedTokenizedSearchWithTerms(searchTerm, level, type, searchMode);
+                results = tokenizedResult.getResults();
+                actualSearchTerms = tokenizedResult.getActualSearchTerms();
+                searchStrategy = "tokenized";
             }
 
             // 如果仍然没有结果，尝试中文分词（简单实现）
             if (results.isEmpty() && searchTerm != null && searchTerm.length() > 1) {
                 logger.info("尝试中文字符分词搜索");
-                results = performUnifiedChineseTokenizedSearch(searchTerm, level, type, searchMode);
+                SearchResultWithTerms chineseResult = performUnifiedChineseTokenizedSearchWithTerms(searchTerm, level, type, searchMode);
+                results = chineseResult.getResults();
+                actualSearchTerms = chineseResult.getActualSearchTerms();
+                searchStrategy = "chinese_tokenized";
             }
 
-            logger.info("统一搜索完成，找到 {} 个结果", results.size());
+            logger.info("统一搜索完成，找到 {} 个结果，实际搜索词: {}", results.size(), actualSearchTerms);
 
         } catch (Exception e) {
             logger.error("统一搜索过程中出现错误: {}", e.getMessage(), e);
             // 降级到简单搜索
             results = resourceMapper.selectByUnifiedSearch(searchTerm, level, type, searchMode);
+            actualSearchTerms.add(searchTerm);
+            searchStrategy = "fallback";
         }
 
-        return results;
+        return new SearchResultWithTerms(results, actualSearchTerms, searchStrategy);
+    }
+
+    /**
+     * 保持向后兼容的方法
+     */
+    private List<Resource> performUnifiedSearch(String searchTerm, Integer level, String type, String searchMode) {
+        SearchResultWithTerms result = performUnifiedSearchWithTerms(searchTerm, level, type, searchMode);
+        return result.getResults();
     }
 
 
@@ -191,11 +259,12 @@ public class ResourceService {
     }
 
     /**
-     * 执行统一分词搜索（英文空格分词）
+     * 执行统一分词搜索（英文空格分词）- 带搜索词跟踪
      */
-    private List<Resource> performUnifiedTokenizedSearch(String searchTerm, Integer level, String type, String searchMode) {
+    private SearchResultWithTerms performUnifiedTokenizedSearchWithTerms(String searchTerm, Integer level, String type, String searchMode) {
         String[] terms = searchTerm.split("\\s+");
         List<Resource> results = new ArrayList<>();
+        List<String> actualSearchTerms = new ArrayList<>();
 
         // 使用多个关键词搜索
         if (terms.length >= 1) {
@@ -204,6 +273,13 @@ public class ResourceService {
             String term3 = terms.length > 2 ? terms[2] : null;
 
             results = resourceMapper.selectByUnifiedMultipleTermsSearch(term1, term2, term3, level, type, searchMode);
+
+            if (!results.isEmpty()) {
+                // 记录实际使用的多词搜索
+                if (term1 != null) actualSearchTerms.add(term1);
+                if (term2 != null) actualSearchTerms.add(term2);
+                if (term3 != null) actualSearchTerms.add(term3);
+            }
         }
 
         // 如果多词搜索无结果，尝试单个词搜索
@@ -211,21 +287,33 @@ public class ResourceService {
             for (String term : terms) {
                 if (!term.trim().isEmpty()) {
                     List<Resource> termResults = resourceMapper.selectByUnifiedSearch(term.trim(), level, type, searchMode);
-                    results.addAll(termResults);
+                    if (!termResults.isEmpty()) {
+                        results.addAll(termResults);
+                        actualSearchTerms.add(term.trim());
+                    }
                 }
             }
             // 去重
             results = results.stream().distinct().collect(Collectors.toList());
         }
 
-        return results;
+        return new SearchResultWithTerms(results, actualSearchTerms, "tokenized");
     }
 
     /**
-     * 执行统一中文分词搜索（简单实现）
+     * 保持向后兼容的方法
      */
-    private List<Resource> performUnifiedChineseTokenizedSearch(String searchTerm, Integer level, String type, String searchMode) {
+    private List<Resource> performUnifiedTokenizedSearch(String searchTerm, Integer level, String type, String searchMode) {
+        SearchResultWithTerms result = performUnifiedTokenizedSearchWithTerms(searchTerm, level, type, searchMode);
+        return result.getResults();
+    }
+
+    /**
+     * 执行统一中文分词搜索（简单实现）- 带搜索词跟踪
+     */
+    private SearchResultWithTerms performUnifiedChineseTokenizedSearchWithTerms(String searchTerm, Integer level, String type, String searchMode) {
         List<Resource> results = new ArrayList<>();
+        List<String> actualSearchTerms = new ArrayList<>();
 
         // 简单的中文分词：按2-3个字符分组
         if (searchTerm.length() >= 4) {
@@ -233,19 +321,36 @@ public class ResourceService {
             for (int i = 0; i <= searchTerm.length() - 2; i++) {
                 String subTerm = searchTerm.substring(i, i + 2);
                 List<Resource> subResults = resourceMapper.selectByUnifiedSearch(subTerm, level, type, searchMode);
-                results.addAll(subResults);
+                if (!subResults.isEmpty()) {
+                    results.addAll(subResults);
+                    actualSearchTerms.add(subTerm);
+                }
             }
 
             // 尝试3字分词
             for (int i = 0; i <= searchTerm.length() - 3; i++) {
                 String subTerm = searchTerm.substring(i, i + 3);
                 List<Resource> subResults = resourceMapper.selectByUnifiedSearch(subTerm, level, type, searchMode);
-                results.addAll(subResults);
+                if (!subResults.isEmpty()) {
+                    results.addAll(subResults);
+                    actualSearchTerms.add(subTerm);
+                }
             }
         }
 
         // 去重
-        return results.stream().distinct().collect(Collectors.toList());
+        results = results.stream().distinct().collect(Collectors.toList());
+        actualSearchTerms = actualSearchTerms.stream().distinct().collect(Collectors.toList());
+
+        return new SearchResultWithTerms(results, actualSearchTerms, "chinese_tokenized");
+    }
+
+    /**
+     * 保持向后兼容的方法
+     */
+    private List<Resource> performUnifiedChineseTokenizedSearch(String searchTerm, Integer level, String type, String searchMode) {
+        SearchResultWithTerms result = performUnifiedChineseTokenizedSearchWithTerms(searchTerm, level, type, searchMode);
+        return result.getResults();
     }
 
 

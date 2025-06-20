@@ -3,6 +3,7 @@ package org.example.dto;
 import com.fasterxml.jackson.annotation.JsonFormat;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 public class ResourceResponse {
 
@@ -15,6 +16,7 @@ public class ResourceResponse {
     private String type;
     private Integer source;
     private Integer resourceTime;
+    private List<String> words;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createTime;

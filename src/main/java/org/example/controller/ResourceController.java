@@ -4,6 +4,7 @@ import com.github.pagehelper.PageInfo;
 import org.example.dto.ResourceRequest;
 import org.example.dto.ResourceResponse;
 import org.example.dto.SearchRequest;
+import org.example.dto.SearchResponse;
 import org.example.service.ResourceService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -103,15 +104,18 @@ public class ResourceController {
      * 支持多字段搜索、模糊匹配、分词搜索和类型过滤
      * 支持按名称和内容搜索（分词搜索仅搜索名称字段）
      * 支持按层级和内容类型过滤
+     * 返回包含实际搜索词信息的SearchResponse
      */
     @PostMapping("/search")
-    public ResponseEntity<PageInfo<ResourceResponse>> searchResources(@Valid @RequestBody SearchRequest searchRequest) {
+    public ResponseEntity<SearchResponse> searchResources(@Valid @RequestBody SearchRequest searchRequest) {
         logger.info("API调用：统一搜索资源，搜索词: {}, 页码: {}, 大小: {}, 层级: {}, 类型: {}",
                    searchRequest.getSearchTerm(), searchRequest.getPage(), searchRequest.getSize(),
                    searchRequest.getLevel(), searchRequest.getType());
 
         try {
-            PageInfo<ResourceResponse> results = resourceService.searchResourcesWithPagination(searchRequest);
+            SearchResponse results = resourceService.searchResourcesWithSearchInfo(searchRequest);
+            logger.info("搜索完成，实际搜索词: {}, 搜索策略: {}",
+                       results.getActualSearchTerms(), results.getSearchStrategy());
             return ResponseEntity.ok(results);
         } catch (Exception e) {
             logger.error("搜索资源失败: {}", e.getMessage(), e);
