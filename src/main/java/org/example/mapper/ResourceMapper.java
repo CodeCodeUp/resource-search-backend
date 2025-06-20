@@ -144,4 +144,9 @@ public interface ResourceMapper {
      * 批量插入资源
      */
     int insertBatch(@Param("resources") List<Resource> resources);
+
+    /**
+     * 根据ID列表批量查询资源
+     */
+    List<Resource> selectByIds(@Param("ids") List<Integer> ids);
 }

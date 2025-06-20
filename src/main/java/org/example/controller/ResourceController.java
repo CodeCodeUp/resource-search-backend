@@ -100,7 +100,7 @@ public class ResourceController {
 
 
     /**
-     * 统一搜索资源接口（分页）
+     * 统一搜索资源接口（分页）- 使用Lucene + IK Analyzer高级搜索
      * 支持多字段搜索、模糊匹配、分词搜索和类型过滤
      * 支持按名称和内容搜索（分词搜索仅搜索名称字段）
      * 支持按层级和内容类型过滤
@@ -108,7 +108,7 @@ public class ResourceController {
      */
     @PostMapping("/search")
     public ResponseEntity<SearchResponse> searchResources(@Valid @RequestBody SearchRequest searchRequest) {
-        logger.info("API调用：统一搜索资源，搜索词: {}, 页码: {}, 大小: {}, 层级: {}, 类型: {}",
+        logger.info("API调用：Lucene + IK高级搜索，搜索词: {}, 页码: {}, 大小: {}, 层级: {}, 类型: {}",
                    searchRequest.getSearchTerm(), searchRequest.getPage(), searchRequest.getSize(),
                    searchRequest.getLevel(), searchRequest.getType());
 
@@ -120,6 +120,23 @@ public class ResourceController {
         } catch (Exception e) {
             logger.error("搜索资源失败: {}", e.getMessage(), e);
             return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    /**
+     * 重建Lucene索引
+     */
+    @PostMapping("/rebuild-index")
+    public ResponseEntity<String> rebuildIndex() {
+        logger.info("API调用：重建Lucene索引");
+
+        try {
+            resourceService.rebuildLuceneIndex();
+            logger.info("Lucene索引重建成功");
+            return ResponseEntity.ok("索引重建成功");
+        } catch (Exception e) {
+            logger.error("重建索引失败: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError().body("重建索引失败: " + e.getMessage());
         }
     }
 
