@@ -108,18 +108,6 @@ public class ResourceService {
 
 
 
-    /**
-     * 获取所有资源（分页）
-     */
-    public PageInfo<ResourceResponse> getAllResourcesWithPagination(int page, int size) {
-        logger.info("分页获取所有资源，页码: {}, 大小: {}", page, size);
-
-        PageHelper.startPage(page , size); // PageHelper页码从1开始
-        List<Resource> resources = resourceMapper.selectAll();
-
-        return convertToPageInfo(resources);
-    }
-
 
 
     /**

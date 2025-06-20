@@ -97,24 +97,6 @@ public class ResourceController {
     }
 
 
-    /**
-     * 获取所有资源（分页）
-     */
-    @GetMapping("/page")
-    public ResponseEntity<PageInfo<ResourceResponse>> getAllResourcesWithPagination(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-        logger.info("API调用：分页获取所有资源，页码: {}, 大小: {}", page, size);
-
-        try {
-            PageInfo<ResourceResponse> resources = resourceService.getAllResourcesWithPagination(page, size);
-            return ResponseEntity.ok(resources);
-        } catch (Exception e) {
-            logger.error("分页获取所有资源失败: {}", e.getMessage(), e);
-            return ResponseEntity.internalServerError().build();
-        }
-    }
-
 
     /**
      * 统一搜索资源接口（分页）
@@ -139,49 +121,4 @@ public class ResourceController {
 
 
 
-
-
-
-    /**
-     * 根据层级获取资源（分页）- 使用统一搜索接口
-     */
-    @GetMapping("/level/{level}")
-    public ResponseEntity<PageInfo<ResourceResponse>> getResourcesByLevel(
-            @PathVariable Integer level,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-        logger.info("API调用：分页根据层级获取资源，层级: {}, 页码: {}, 大小: {}", level, page, size);
-
-        try {
-            // 使用统一搜索接口，空搜索词表示获取所有该层级的资源
-            SearchRequest searchRequest = new SearchRequest("", page, size, level.toString(), null);
-            PageInfo<ResourceResponse> resources = resourceService.searchResourcesWithPagination(searchRequest);
-            return ResponseEntity.ok(resources);
-        } catch (Exception e) {
-            logger.error("分页根据层级获取资源失败: {}", e.getMessage(), e);
-            return ResponseEntity.internalServerError().build();
-        }
-    }
-
-
-    /**
-     * 根据类型获取资源（分页）- 使用统一搜索接口
-     */
-    @GetMapping("/type/{type}")
-    public ResponseEntity<PageInfo<ResourceResponse>> getResourcesByType(
-            @PathVariable String type,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-        logger.info("API调用：分页根据类型获取资源，类型: {}, 页码: {}, 大小: {}", type, page, size);
-
-        try {
-            // 使用统一搜索接口，空搜索词表示获取所有该类型的资源
-            SearchRequest searchRequest = new SearchRequest("", page, size, null, type);
-            PageInfo<ResourceResponse> resources = resourceService.searchResourcesWithPagination(searchRequest);
-            return ResponseEntity.ok(resources);
-        } catch (Exception e) {
-            logger.error("分页根据类型获取资源失败: {}", e.getMessage(), e);
-            return ResponseEntity.internalServerError().build();
-        }
-    }
 }
