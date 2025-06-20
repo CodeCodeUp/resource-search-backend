@@ -38,7 +38,8 @@ public class ResourceService {
                 request.getUrl(),
                 request.getPig(),
                 request.getLevel(),
-                request.getType()
+                request.getType(),
+                request.getSource()
         );
         resource.setResourceTime(request.getResourceTime());
 
@@ -75,6 +76,7 @@ public class ResourceService {
             existingResource.setPig(request.getPig());
             existingResource.setLevel(request.getLevel());
             existingResource.setType(request.getType());
+            existingResource.setSource(request.getSource());
             existingResource.setResourceTime(request.getResourceTime());
 
             int result = resourceMapper.updateById(existingResource);
@@ -291,6 +293,7 @@ public class ResourceService {
                 resource.getPig(),
                 resource.getLevel(),
                 resource.getType(),
+                resource.getSource(),
                 resource.getResourceTime(),
                 resource.getCreateTime(),
                 resource.getUpdateTime()

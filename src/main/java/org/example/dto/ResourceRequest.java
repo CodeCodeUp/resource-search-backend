@@ -25,19 +25,22 @@ public class ResourceRequest {
     @Size(max = 50, message = "资源类型不能超过50个字符")
     private String type;
 
+    private Integer source; // 数据来源：1-Excel导入，2-爬虫，3-手动添加等
+
     private Integer resourceTime;
 
     // Default constructor
     public ResourceRequest() {}
 
     // Constructor with all fields
-    public ResourceRequest(String name, String content, String url, String pig, Integer level, String type, Integer resourceTime) {
+    public ResourceRequest(String name, String content, String url, String pig, Integer level, String type, Integer source, Integer resourceTime) {
         this.name = name;
         this.content = content;
         this.url = url;
         this.pig = pig;
         this.level = level;
         this.type = type;
+        this.source = source;
         this.resourceTime = resourceTime;
     }
 
@@ -90,6 +93,14 @@ public class ResourceRequest {
         this.type = type;
     }
 
+    public Integer getSource() {
+        return source;
+    }
+
+    public void setSource(Integer source) {
+        this.source = source;
+    }
+
     public Integer getResourceTime() {
         return resourceTime;
     }
@@ -107,6 +118,7 @@ public class ResourceRequest {
                 ", pig='" + pig + '\'' +
                 ", level=" + level +
                 ", type='" + type + '\'' +
+                ", source=" + source +
                 ", resourceTime=" + resourceTime +
                 '}';
     }

@@ -13,6 +13,7 @@ public class ResourceResponse {
     private String pig;
     private Integer level;
     private String type;
+    private Integer source;
     private Integer resourceTime;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
@@ -26,7 +27,7 @@ public class ResourceResponse {
 
     // Constructor with all fields
     public ResourceResponse(Integer id, String name, String content, String url, String pig,
-                           Integer level, String type, Integer resourceTime, LocalDateTime createTime, LocalDateTime updateTime) {
+                           Integer level, String type, Integer source, Integer resourceTime, LocalDateTime createTime, LocalDateTime updateTime) {
         this.id = id;
         this.name = name;
         this.content = content;
@@ -34,6 +35,7 @@ public class ResourceResponse {
         this.pig = pig;
         this.level = level;
         this.type = type;
+        this.source = source;
         this.resourceTime = resourceTime;
         this.createTime = createTime;
         this.updateTime = updateTime;
@@ -96,6 +98,14 @@ public class ResourceResponse {
         this.type = type;
     }
 
+    public Integer getSource() {
+        return source;
+    }
+
+    public void setSource(Integer source) {
+        this.source = source;
+    }
+
     public Integer getResourceTime() {
         return resourceTime;
     }
@@ -130,6 +140,7 @@ public class ResourceResponse {
                 ", pig='" + pig + '\'' +
                 ", level=" + level +
                 ", type='" + type + '\'' +
+                ", source=" + source +
                 ", resourceTime=" + resourceTime +
                 ", createTime=" + createTime +
                 ", updateTime=" + updateTime +

@@ -134,4 +134,14 @@ public interface ResourceMapper {
                                                      @Param("level") Integer level,
                                                      @Param("type") String type,
                                                      @Param("searchMode") String searchMode);
+
+    /**
+     * 根据source删除资源
+     */
+    int deleteBySource(@Param("source") Integer source);
+
+    /**
+     * 批量插入资源
+     */
+    int insertBatch(@Param("resources") List<Resource> resources);
 }

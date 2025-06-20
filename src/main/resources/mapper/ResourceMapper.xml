@@ -11,6 +11,7 @@
         <result column="pig" property="pig" jdbcType="VARCHAR"/>
         <result column="level" property="level" jdbcType="TINYINT"/>
         <result column="type" property="type" jdbcType="VARCHAR"/>
+        <result column="source" property="source" jdbcType="INTEGER"/>
         <result column="resource_time" property="resourceTime" jdbcType="INTEGER"/>
         <result column="create_time" property="createTime" jdbcType="TIMESTAMP"/>
         <result column="update_time" property="updateTime" jdbcType="TIMESTAMP"/>
@@ -18,7 +19,7 @@
 
     <!-- 基础SQL片段 -->
     <sql id="Base_Column_List">
-        id, name, content, url, pig, level, type, resource_time, create_time, update_time
+        id, name, content, url, pig, level, type, source, resource_time, create_time, update_time
     </sql>
 
     <!-- 根据ID查询资源 -->
@@ -182,8 +183,8 @@
 
     <!-- 插入资源 -->
     <insert id="insert" parameterType="org.example.entity.Resource" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO resource (name, content, url, pig, level, type, resource_time, create_time, update_time)
-        VALUES (#{name}, #{content}, #{url}, #{pig}, #{level}, #{type}, #{resourceTime}, NOW(), NOW())
+        INSERT INTO resource (name, content, url, pig, level, type, source, resource_time, create_time, update_time)
+        VALUES (#{name}, #{content}, #{url}, #{pig}, #{level}, #{type}, #{source}, #{resourceTime}, NOW(), NOW())
     </insert>
 
     <!-- 更新资源 -->
@@ -195,6 +196,7 @@
             pig = #{pig},
             level = #{level},
             type = #{type},
+            source = #{source},
             resource_time = #{resourceTime},
             update_time = NOW()
         WHERE id = #{id}
@@ -307,5 +309,20 @@
         </if>
         ORDER BY id DESC
     </select>
+
+    <!-- 根据source删除资源 -->
+    <delete id="deleteBySource" parameterType="java.lang.Integer">
+        DELETE FROM resource WHERE source = #{source}
+    </delete>
+
+    <!-- 批量插入资源 -->
+    <insert id="insertBatch" parameterType="java.util.List">
+        INSERT INTO resource (name, content, url, pig, level, type, source, resource_time, create_time, update_time)
+        VALUES
+        <foreach collection="resources" item="resource" separator=",">
+            (#{resource.name}, #{resource.content}, #{resource.url}, #{resource.pig},
+             #{resource.level}, #{resource.type}, #{resource.source}, #{resource.resourceTime}, NOW(), NOW())
+        </foreach>
+    </insert>
 
 </mapper>

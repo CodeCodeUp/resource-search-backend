@@ -25,6 +25,8 @@ public class Resource {
 
     private String type;
 
+    private Integer source; // 数据来源：1-Excel导入，2-爬虫，3-手动添加等
+
     private Integer resourceTime;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
@@ -44,6 +46,17 @@ public class Resource {
         this.pig = pig;
         this.level = level;
         this.type = type;
+    }
+
+    // 带source字段的构造函数
+    public Resource(String name, String content, String url, String pig, Integer level, String type, Integer source) {
+        this.name = name;
+        this.content = content;
+        this.url = url;
+        this.pig = pig;
+        this.level = level;
+        this.type = type;
+        this.source = source;
     }
 
     // Getters and Setters
@@ -103,6 +116,14 @@ public class Resource {
         this.type = type;
     }
 
+    public Integer getSource() {
+        return source;
+    }
+
+    public void setSource(Integer source) {
+        this.source = source;
+    }
+
     public Integer getResourceTime() {
         return resourceTime;
     }
@@ -139,12 +160,13 @@ public class Resource {
                 Objects.equals(pig, resource.pig) &&
                 Objects.equals(level, resource.level) &&
                 Objects.equals(type, resource.type) &&
+                Objects.equals(source, resource.source) &&
                 Objects.equals(resourceTime, resource.resourceTime);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, name, content, url, pig, level, type, resourceTime);
+        return Objects.hash(id, name, content, url, pig, level, type, source, resourceTime);
     }
 
     @Override
@@ -157,6 +179,7 @@ public class Resource {
                 ", pig='" + pig + '\'' +
                 ", level=" + level +
                 ", type='" + type + '\'' +
+                ", source=" + source +
                 ", resourceTime=" + resourceTime +
                 ", createTime=" + createTime +
                 ", updateTime=" + updateTime +

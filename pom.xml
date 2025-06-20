@@ -72,6 +72,13 @@
             <version>4.12.0</version>
         </dependency>
 
+        <!-- EasyExcel for Excel processing -->
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>easyexcel</artifactId>
+            <version>3.3.2</version>
+        </dependency>
+
         <!-- Test Dependencies -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
