@@ -385,4 +385,45 @@
         id DESC
     </select>
 
+    <!-- 查找URL重复的资源ID（保留resourceTime最新的） -->
+    <select id="findDuplicateIdsByUrl" resultType="java.lang.Integer">
+        SELECT r1.id
+        FROM resource r1
+        WHERE r1.url IS NOT NULL
+          AND r1.url != ''
+          AND EXISTS (
+              SELECT 1
+              FROM resource r2
+              WHERE r2.url = r1.url
+                AND r2.id != r1.id
+                AND (r2.resource_time > r1.resource_time
+                     OR (r2.resource_time = r1.resource_time AND r2.id > r1.id))
+          )
+    </select>
+
+    <!-- 查找名称重复的资源ID（保留resourceTime最新的） -->
+    <select id="findDuplicateIdsByName" resultType="java.lang.Integer">
+        SELECT r1.id
+        FROM resource r1
+        WHERE r1.name IS NOT NULL
+          AND r1.name != ''
+          AND EXISTS (
+              SELECT 1
+              FROM resource r2
+              WHERE r2.name = r1.name
+                AND r2.id != r1.id
+                AND (r2.resource_time > r1.resource_time
+                     OR (r2.resource_time = r1.resource_time AND r2.id > r1.id))
+          )
+    </select>
+
+    <!-- 批量删除资源 -->
+    <delete id="deleteByIds" parameterType="java.util.List">
+        DELETE FROM resource
+        WHERE id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
 </mapper>

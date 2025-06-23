@@ -6,6 +6,7 @@ import org.example.dto.ResourceResponse;
 import org.example.dto.SearchRequest;
 import org.example.dto.SearchResponse;
 import org.example.service.ResourceService;
+import org.example.service.ResourceDeduplicationService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +28,9 @@ public class ResourceController {
 
     @Autowired
     private ResourceService resourceService;
+
+    @Autowired
+    private ResourceDeduplicationService deduplicationService;
 
     /**
      * 创建新资源
@@ -119,6 +123,61 @@ public class ResourceController {
             return ResponseEntity.ok(results);
         } catch (Exception e) {
             logger.error("搜索资源失败: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    /**
+     * 手动触发资源去重
+     */
+    @PostMapping("/deduplicate")
+    public ResponseEntity<String> deduplicateResources() {
+        logger.info("API调用：手动触发资源去重");
+
+        try {
+            // 先获取统计信息
+            ResourceDeduplicationService.DeduplicationStats stats =
+                deduplicationService.getDeduplicationStats();
+
+            if (stats.getTotalDuplicateCount() == 0) {
+                logger.info("未发现重复资源");
+                return ResponseEntity.ok("未发现重复资源，无需去重");
+            }
+
+            logger.info("发现重复资源 - URL重复: {} 条, 名称重复: {} 条",
+                       stats.getUrlDuplicateCount(), stats.getNameDuplicateCount());
+
+            // 执行去重操作
+            deduplicationService.deduplicateResources();
+
+            String message = String.format("去重操作完成，删除了 %d 条重复资源", stats.getTotalDuplicateCount());
+            logger.info(message);
+            return ResponseEntity.ok(message);
+
+        } catch (Exception e) {
+            logger.error("手动去重操作失败: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError().body("去重操作失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 获取重复资源统计信息
+     */
+    @GetMapping("/duplicate-stats")
+    public ResponseEntity<ResourceDeduplicationService.DeduplicationStats> getDuplicateStats() {
+        logger.info("API调用：获取重复资源统计信息");
+
+        try {
+            ResourceDeduplicationService.DeduplicationStats stats =
+                deduplicationService.getDeduplicationStats();
+
+            logger.info("重复资源统计 - URL重复: {} 条, 名称重复: {} 条",
+                       stats.getUrlDuplicateCount(), stats.getNameDuplicateCount());
+
+            return ResponseEntity.ok(stats);
+
+        } catch (Exception e) {
+            logger.error("获取重复资源统计信息失败: {}", e.getMessage(), e);
             return ResponseEntity.internalServerError().build();
         }
     }

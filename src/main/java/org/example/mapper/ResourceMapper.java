@@ -158,4 +158,19 @@ public interface ResourceMapper {
                                               @Param("level") Integer level,
                                               @Param("type") String type,
                                               @Param("searchMode") String searchMode);
+
+    /**
+     * 查找URL重复的资源ID（保留resourceTime最新的）
+     */
+    List<Integer> findDuplicateIdsByUrl();
+
+    /**
+     * 查找名称重复的资源ID（保留resourceTime最新的）
+     */
+    List<Integer> findDuplicateIdsByName();
+
+    /**
+     * 批量删除资源
+     */
+    int deleteByIds(@Param("ids") List<Integer> ids);
 }
