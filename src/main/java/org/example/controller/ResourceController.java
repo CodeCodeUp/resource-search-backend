@@ -123,23 +123,4 @@ public class ResourceController {
         }
     }
 
-    /**
-     * 重建Lucene索引
-     */
-    @PostMapping("/rebuild-index")
-    public ResponseEntity<String> rebuildIndex() {
-        logger.info("API调用：重建Lucene索引");
-
-        try {
-            resourceService.rebuildLuceneIndex();
-            logger.info("Lucene索引重建成功");
-            return ResponseEntity.ok("索引重建成功");
-        } catch (Exception e) {
-            logger.error("重建索引失败: {}", e.getMessage(), e);
-            return ResponseEntity.internalServerError().body("重建索引失败: " + e.getMessage());
-        }
-    }
-
-
-
 }

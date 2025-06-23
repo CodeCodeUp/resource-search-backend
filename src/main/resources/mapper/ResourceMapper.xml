@@ -341,4 +341,48 @@
         )
     </select>
 
+    <!-- 组合搜索：使用多个搜索词进行查询（原词+分词结果） -->
+    <select id="selectByCombinedTermsSearch" resultMap="BaseResultMap">
+        SELECT DISTINCT
+        <include refid="Base_Column_List"/>
+        FROM resource
+        WHERE 1=1
+        <if test="searchTerms != null and searchTerms.size() > 0">
+            AND (
+            <foreach collection="searchTerms" item="term" separator=" OR ">
+                <choose>
+                    <when test="searchMode == 'name'">
+                        LOWER(name) LIKE LOWER(CONCAT('%', #{term}, '%'))
+                    </when>
+                    <otherwise>
+                        (LOWER(name) LIKE LOWER(CONCAT('%', #{term}, '%')) OR LOWER(content) LIKE LOWER(CONCAT('%', #{term}, '%')))
+                    </otherwise>
+                </choose>
+            </foreach>
+            )
+        </if>
+        <if test="level != null">
+            AND level = #{level}
+        </if>
+        <if test="type != null and type != ''">
+            AND type = #{type}
+        </if>
+        ORDER BY
+        <if test="searchTerms != null and searchTerms.size() > 0">
+            <!-- 优先级排序：完全匹配 > 前缀匹配 > 包含匹配 -->
+            <foreach collection="searchTerms" item="term" separator=", ">
+                CASE
+                    WHEN LOWER(name) = LOWER(#{term}) THEN 1
+                    WHEN LOWER(name) LIKE LOWER(CONCAT(#{term}, '%')) THEN 2
+                    WHEN LOWER(name) LIKE LOWER(CONCAT('%', #{term}, '%')) THEN 3
+                    <if test="searchMode != 'name'">
+                    WHEN LOWER(content) LIKE LOWER(CONCAT('%', #{term}, '%')) THEN 4
+                    </if>
+                    ELSE 5
+                END
+            </foreach>,
+        </if>
+        id DESC
+    </select>
+
 </mapper>

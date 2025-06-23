@@ -149,4 +149,13 @@ public interface ResourceMapper {
      * 根据ID列表批量查询资源
      */
     List<Resource> selectByIds(@Param("ids") List<Integer> ids);
+
+    /**
+     * 组合搜索：使用多个搜索词进行查询（原词+分词结果）
+     * 支持层级和类型过滤，支持搜索模式选择
+     */
+    List<Resource> selectByCombinedTermsSearch(@Param("searchTerms") List<String> searchTerms,
+                                              @Param("level") Integer level,
+                                              @Param("type") String type,
+                                              @Param("searchMode") String searchMode);
 }
