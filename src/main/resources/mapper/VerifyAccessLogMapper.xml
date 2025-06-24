@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.example.mapper.VerifyAccessLogMapper">
+
+    <!-- 结果映射 -->
+    <resultMap id="BaseResultMap" type="org.example.entity.VerifyAccessLog">
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="session_id" property="sessionId" jdbcType="VARCHAR"/>
+        <result column="resource_id" property="resourceId" jdbcType="VARCHAR"/>
+        <result column="action" property="action" jdbcType="VARCHAR"/>
+        <result column="ip_address" property="ipAddress" jdbcType="VARCHAR"/>
+        <result column="user_agent" property="userAgent" jdbcType="LONGVARCHAR"/>
+        <result column="device_fingerprint" property="deviceFingerprint" jdbcType="VARCHAR"/>
+        <result column="success" property="success" jdbcType="BOOLEAN"/>
+        <result column="error_message" property="errorMessage" jdbcType="LONGVARCHAR"/>
+        <result column="created_at" property="createdAt" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <!-- 基础SQL片段 -->
+    <sql id="Base_Column_List">
+        id, session_id, resource_id, action, ip_address, user_agent,
+        device_fingerprint, success, error_message, created_at
+    </sql>
+
+    <!-- 插入访问日志 -->
+    <insert id="insert" parameterType="org.example.entity.VerifyAccessLog" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO verify_access_logs (
+            session_id, resource_id, action, ip_address, user_agent,
+            device_fingerprint, success, error_message, created_at
+        ) VALUES (
+            #{sessionId}, #{resourceId}, #{action}, #{ipAddress}, #{userAgent},
+            #{deviceFingerprint}, #{success}, #{errorMessage}, #{createdAt}
+        )
+    </insert>
+
+    <!-- 根据ID查询 -->
+    <select id="selectById" parameterType="java.lang.Long" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM verify_access_logs
+        WHERE id = #{id}
+    </select>
+
+    <!-- 根据会话ID查询日志 -->
+    <select id="selectBySessionId" parameterType="java.lang.String" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM verify_access_logs
+        WHERE session_id = #{sessionId}
+        ORDER BY created_at DESC
+    </select>
+
+    <!-- 根据资源ID查询日志 -->
+    <select id="selectByResourceId" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM verify_access_logs
+        WHERE resource_id = #{resourceId}
+        ORDER BY created_at DESC
+        <if test="limit != null">
+            LIMIT #{limit}
+        </if>
+    </select>
+
+    <!-- 根据IP地址查询最近的日志 -->
+    <select id="selectRecentByIpAddress" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM verify_access_logs
+        WHERE ip_address = #{ipAddress}
+          AND created_at >= DATE_SUB(NOW(), INTERVAL #{minutes} MINUTE)
+        ORDER BY created_at DESC
+    </select>
+
+    <!-- 根据设备指纹查询最近的日志 -->
+    <select id="selectRecentByDeviceFingerprint" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM verify_access_logs
+        WHERE device_fingerprint = #{deviceFingerprint}
+          AND created_at >= DATE_SUB(NOW(), INTERVAL #{minutes} MINUTE)
+        ORDER BY created_at DESC
+    </select>
+
+    <!-- 统计IP地址的访问次数 -->
+    <select id="countByIpAddress" resultType="int">
+        SELECT COUNT(*)
+        FROM verify_access_logs
+        WHERE ip_address = #{ipAddress}
+          AND created_at >= DATE_SUB(NOW(), INTERVAL #{minutes} MINUTE)
+    </select>
+
+    <!-- 统计设备指纹的访问次数 -->
+    <select id="countByDeviceFingerprint" resultType="int">
+        SELECT COUNT(*)
+        FROM verify_access_logs
+        WHERE device_fingerprint = #{deviceFingerprint}
+          AND created_at >= DATE_SUB(NOW(), INTERVAL #{minutes} MINUTE)
+    </select>
+
+    <!-- 统计失败的访问次数（按IP） -->
+    <select id="countFailuresByIpAddress" resultType="int">
+        SELECT COUNT(*)
+        FROM verify_access_logs
+        WHERE ip_address = #{ipAddress}
+          AND success = false
+          AND created_at >= DATE_SUB(NOW(), INTERVAL #{minutes} MINUTE)
+    </select>
+
+    <!-- 统计失败的访问次数（按设备指纹） -->
+    <select id="countFailuresByDeviceFingerprint" resultType="int">
+        SELECT COUNT(*)
+        FROM verify_access_logs
+        WHERE device_fingerprint = #{deviceFingerprint}
+          AND success = false
+          AND created_at >= DATE_SUB(NOW(), INTERVAL #{minutes} MINUTE)
+    </select>
+
+    <!-- 删除过期的日志 -->
+    <delete id="deleteOldLogs">
+        DELETE FROM verify_access_logs
+        WHERE #{olderThan} > created_at
+    </delete>
+
+    <!-- 获取异常IP列表 -->
+    <select id="selectAnomalousIpAddresses" resultType="java.lang.String">
+        SELECT ip_address
+        FROM (
+            SELECT 
+                ip_address,
+                COUNT(*) as total_attempts,
+                SUM(CASE WHEN success = 1 THEN 1 ELSE 0 END) as success_count,
+                SUM(CASE WHEN success = 1 THEN 1 ELSE 0 END) / COUNT(*) as success_rate
+            FROM verify_access_logs
+            WHERE created_at >= DATE_SUB(NOW(), INTERVAL #{minutes} MINUTE)
+            GROUP BY ip_address
+            HAVING total_attempts >= #{minAttempts} 
+               AND success_rate >= #{maxSuccessRate}
+        ) anomalous_ips
+    </select>
+
+    <!-- 获取异常设备指纹列表 -->
+    <select id="selectAnomalousDeviceFingerprints" resultType="java.lang.String">
+        SELECT device_fingerprint
+        FROM (
+            SELECT 
+                device_fingerprint,
+                COUNT(*) as total_attempts,
+                SUM(CASE WHEN success = 1 THEN 1 ELSE 0 END) as success_count,
+                SUM(CASE WHEN success = 1 THEN 1 ELSE 0 END) / COUNT(*) as success_rate
+            FROM verify_access_logs
+            WHERE created_at >= DATE_SUB(NOW(), INTERVAL #{minutes} MINUTE)
+              AND device_fingerprint IS NOT NULL
+            GROUP BY device_fingerprint
+            HAVING total_attempts >= #{minAttempts} 
+               AND success_rate >= #{maxSuccessRate}
+        ) anomalous_devices
+    </select>
+
+</mapper>

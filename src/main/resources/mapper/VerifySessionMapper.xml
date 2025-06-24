@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.example.mapper.VerifySessionMapper">
+
+    <!-- 结果映射 -->
+    <resultMap id="BaseResultMap" type="org.example.entity.VerifySession">
+        <id column="id" property="id" jdbcType="VARCHAR"/>
+        <result column="session_id" property="sessionId" jdbcType="VARCHAR"/>
+        <result column="challenge_id" property="challengeId" jdbcType="VARCHAR"/>
+        <result column="resource_id" property="resourceId" jdbcType="VARCHAR"/>
+        <result column="access_token" property="accessToken" jdbcType="VARCHAR"/>
+        <result column="device_fingerprint" property="deviceFingerprint" jdbcType="VARCHAR"/>
+        <result column="user_agent" property="userAgent" jdbcType="LONGVARCHAR"/>
+        <result column="ip_address" property="ipAddress" jdbcType="VARCHAR"/>
+        <result column="verified_at" property="verifiedAt" jdbcType="TIMESTAMP"/>
+        <result column="expires_at" property="expiresAt" jdbcType="TIMESTAMP"/>
+        <result column="last_access_at" property="lastAccessAt" jdbcType="TIMESTAMP"/>
+        <result column="access_count" property="accessCount" jdbcType="INTEGER"/>
+        <result column="status" property="status" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <!-- 基础SQL片段 -->
+    <sql id="Base_Column_List">
+        id, session_id, challenge_id, resource_id, access_token,
+        device_fingerprint, user_agent, ip_address, verified_at, expires_at, 
+        last_access_at, access_count, status
+    </sql>
+
+    <!-- 插入验证会话 -->
+    <insert id="insert" parameterType="org.example.entity.VerifySession" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO verify_sessions (
+            session_id, challenge_id, resource_id, access_token,
+            device_fingerprint, user_agent, ip_address, verified_at, 
+            expires_at, last_access_at, access_count, status
+        ) VALUES (
+            #{sessionId}, #{challengeId}, #{resourceId}, #{accessToken},
+            #{deviceFingerprint}, #{userAgent}, #{ipAddress}, #{verifiedAt},
+            #{expiresAt}, #{lastAccessAt}, #{accessCount}, #{status}
+        )
+    </insert>
+
+    <!-- 根据会话ID查询 -->
+    <select id="selectBySessionId" parameterType="java.lang.String" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM verify_sessions
+        WHERE session_id = #{sessionId}
+    </select>
+
+    <!-- 根据访问令牌查询 -->
+    <select id="selectByAccessToken" parameterType="java.lang.String" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM verify_sessions
+        WHERE access_token = #{accessToken}
+    </select>
+
+    <!-- 根据ID查询 -->
+    <select id="selectById" parameterType="java.lang.String" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM verify_sessions
+        WHERE id = #{id}
+    </select>
+
+    <!-- 更新会话状态 -->
+    <update id="updateStatus">
+        UPDATE verify_sessions
+        SET status = #{status}
+        WHERE session_id = #{sessionId}
+    </update>
+
+    <!-- 更新访问信息 -->
+    <update id="updateAccessInfo">
+        UPDATE verify_sessions
+        SET access_count = #{accessCount}, last_access_at = #{lastAccessAt}
+        WHERE session_id = #{sessionId}
+    </update>
+
+    <!-- 根据资源ID查询活跃会话 -->
+    <select id="selectActiveByResourceId" parameterType="java.lang.String" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM verify_sessions
+        WHERE resource_id = #{resourceId}
+          AND status = 'active'
+          AND expires_at > NOW()
+        ORDER BY verified_at DESC
+    </select>
+
+    <!-- 根据设备指纹查询活跃会话 -->
+    <select id="selectActiveByDeviceFingerprint" parameterType="java.lang.String" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM verify_sessions
+        WHERE device_fingerprint = #{deviceFingerprint}
+          AND status = 'active'
+          AND expires_at > NOW()
+        ORDER BY verified_at DESC
+    </select>
+
+    <!-- 删除过期的会话 -->
+    <delete id="deleteExpired">
+        DELETE FROM verify_sessions
+        WHERE #{expiredBefore} >expires_at
+    </delete>
+
+    <!-- 撤销会话 -->
+    <update id="revokeSession">
+        UPDATE verify_sessions
+        SET status = 'revoked'
+        WHERE session_id = #{sessionId}
+    </update>
+
+    <!-- 批量撤销会话 -->
+    <update id="revokeSessions">
+        UPDATE verify_sessions
+        SET status = 'revoked'
+        WHERE session_id IN
+        <foreach collection="sessionIds" item="sessionId" open="(" separator="," close=")">
+            #{sessionId}
+        </foreach>
+    </update>
+
+    <!-- 检查会话是否存在 -->
+    <select id="existsBySessionId" parameterType="java.lang.String" resultType="boolean">
+        SELECT COUNT(*) > 0
+        FROM verify_sessions
+        WHERE session_id = #{sessionId}
+    </select>
+
+    <!-- 统计活跃会话数量 -->
+    <select id="countActiveSessions" resultType="int">
+        SELECT COUNT(*)
+        FROM verify_sessions
+        WHERE status = 'active'
+          AND expires_at > NOW()
+    </select>
+
+</mapper>

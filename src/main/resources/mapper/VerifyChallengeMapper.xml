@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.example.mapper.VerifyChallengeMapper">
+
+    <!-- 结果映射 -->
+    <resultMap id="BaseResultMap" type="org.example.entity.VerifyChallenge">
+        <id column="id" property="id" jdbcType="VARCHAR"/>
+        <result column="challenge_id" property="challengeId" jdbcType="VARCHAR"/>
+        <result column="background_image" property="backgroundImage" jdbcType="LONGVARCHAR"/>
+        <result column="puzzle_position" property="puzzlePosition" jdbcType="VARCHAR"/>
+        <result column="tolerance" property="tolerance" jdbcType="INTEGER"/>
+        <result column="device_fingerprint" property="deviceFingerprint" jdbcType="VARCHAR"/>
+        <result column="user_agent" property="userAgent" jdbcType="LONGVARCHAR"/>
+        <result column="ip_address" property="ipAddress" jdbcType="VARCHAR"/>
+        <result column="created_at" property="createdAt" jdbcType="TIMESTAMP"/>
+        <result column="expires_at" property="expiresAt" jdbcType="TIMESTAMP"/>
+        <result column="used_at" property="usedAt" jdbcType="TIMESTAMP"/>
+        <result column="status" property="status" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <!-- 基础SQL片段 -->
+    <sql id="Base_Column_List">
+        id, challenge_id, background_image, puzzle_position, tolerance, 
+        device_fingerprint, user_agent, ip_address, created_at, expires_at, used_at, status
+    </sql>
+
+    <!-- 插入验证挑战 -->
+    <insert id="insert" parameterType="org.example.entity.VerifyChallenge" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO verify_challenges (
+            challenge_id, background_image, puzzle_position, tolerance,
+            device_fingerprint, user_agent, ip_address, created_at, expires_at, status
+        ) VALUES (
+            #{challengeId}, #{backgroundImage}, #{puzzlePosition}, #{tolerance},
+            #{deviceFingerprint}, #{userAgent}, #{ipAddress}, #{createdAt}, #{expiresAt}, #{status}
+        )
+    </insert>
+
+    <!-- 根据挑战ID查询 -->
+    <select id="selectByChallengeId" parameterType="java.lang.String" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM verify_challenges
+        WHERE challenge_id = #{challengeId}
+    </select>
+
+    <!-- 根据ID查询 -->
+    <select id="selectById" parameterType="java.lang.String" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM verify_challenges
+        WHERE id = #{id}
+    </select>
+
+    <!-- 更新挑战状态 -->
+    <update id="updateStatus">
+        UPDATE verify_challenges
+        SET status = #{status}, used_at = #{usedAt}
+        WHERE challenge_id = #{challengeId}
+    </update>
+
+    <!-- 根据设备指纹查询最近的挑战 -->
+    <select id="selectRecentByDeviceFingerprint" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM verify_challenges
+        WHERE device_fingerprint = #{deviceFingerprint}
+          AND created_at >= DATE_SUB(NOW(), INTERVAL #{minutes} MINUTE)
+        ORDER BY created_at DESC
+    </select>
+
+    <!-- 根据IP地址查询最近的挑战 -->
+    <select id="selectRecentByIpAddress" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM verify_challenges
+        WHERE ip_address = #{ipAddress}
+          AND created_at >= DATE_SUB(NOW(), INTERVAL #{minutes} MINUTE)
+        ORDER BY created_at DESC
+    </select>
+
+    <!-- 删除过期的挑战 -->
+    <delete id="deleteExpired">
+        DELETE FROM verify_challenges
+        WHERE #{expiredBefore} > expires_at
+    </delete>
+
+    <!-- 统计设备指纹的失败次数 -->
+    <select id="countFailuresByDeviceFingerprint" resultType="int">
+        SELECT COUNT(*)
+        FROM verify_challenges
+        WHERE device_fingerprint = #{deviceFingerprint}
+          AND status = 'failed'
+          AND created_at >= DATE_SUB(NOW(), INTERVAL #{minutes} MINUTE)
+    </select>
+
+    <!-- 统计IP地址的失败次数 -->
+    <select id="countFailuresByIpAddress" resultType="int">
+        SELECT COUNT(*)
+        FROM verify_challenges
+        WHERE ip_address = #{ipAddress}
+          AND status = 'failed'
+          AND created_at >= DATE_SUB(NOW(), INTERVAL #{minutes} MINUTE)
+    </select>
+
+    <!-- 检查挑战是否存在 -->
+    <select id="existsByChallengeId" parameterType="java.lang.String" resultType="boolean">
+        SELECT COUNT(*) > 0
+        FROM verify_challenges
+        WHERE challenge_id = #{challengeId}
+    </select>
+
+</mapper>

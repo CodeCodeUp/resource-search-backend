@@ -276,9 +276,9 @@ public class ResourceService {
     private PageInfo<ResourceResponse> convertToPageInfo(List<Resource> resources) {
         PageInfo<Resource> pageInfo = new PageInfo<>(resources);
 
-        // 转换为响应对象
+        // 转换为响应对象（搜索结果不包含URL）
         List<ResourceResponse> responseList = resources.stream()
-                .map(this::convertToResponse)
+                .map(this::convertToSearchResponse)
                 .collect(Collectors.toList());
 
         PageInfo<ResourceResponse> responsePageInfo = new PageInfo<>();
@@ -300,21 +300,43 @@ public class ResourceService {
     }
 
     /**
-     * 转换为响应对象
+     * 转换为响应对象（包含URL，用于详情查看）
      */
     private ResourceResponse convertToResponse(Resource resource) {
-        return new ResourceResponse(
-                resource.getId(),
-                resource.getName(),
-                resource.getContent(),
-                resource.getUrl(),
-                resource.getPig(),
-                resource.getLevel(),
-                resource.getType(),
-                resource.getSource(),
-                resource.getResourceTime(),
-                resource.getCreateTime(),
-                resource.getUpdateTime()
-        );
+        return convertToResponse(resource, true);
+    }
+
+    /**
+     * 转换为响应对象（用于搜索，不包含URL）
+     */
+    private ResourceResponse convertToSearchResponse(Resource resource) {
+        return convertToResponse(resource, false);
+    }
+
+    /**
+     * 转换为响应对象的通用方法
+     * @param resource 资源对象
+     * @param includeUrl 是否包含URL
+     */
+    private ResourceResponse convertToResponse(Resource resource, boolean includeUrl) {
+        ResourceResponse response = new ResourceResponse();
+        response.setId(resource.getId());
+        response.setName(resource.getName());
+        response.setContent(resource.getContent());
+        response.setPig(resource.getPig());
+        response.setLevel(resource.getLevel());
+        response.setType(resource.getType());
+        response.setSource(resource.getSource());
+        response.setResourceTime(resource.getResourceTime());
+        response.setCreateTime(resource.getCreateTime());
+        response.setUpdateTime(resource.getUpdateTime());
+
+        // 只有在需要时才设置URL
+        if (includeUrl) {
+            response.setUrl(resource.getUrl());
+        }
+        // 如果不包含URL，则URL字段为null，前端可以通过验证系统获取
+
+        return response;
     }
 }
