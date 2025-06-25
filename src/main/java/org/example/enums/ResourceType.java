@@ -17,6 +17,7 @@ public enum ResourceType {
     GUIDE("study","教程"),
     GAME("game","游戏"),
     WALLPAPER("wallpaper","壁纸"),
+    COMIC("comic","漫画"),
     OTHER("其他","其他类型")
 
             ;

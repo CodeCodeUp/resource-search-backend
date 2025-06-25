@@ -53,8 +53,8 @@ logging:
 # QQ频道爬虫配置
 crawler:
   qq-channel:
-    api-url: "https://pd.qq.com/qunng/guild/gotrpc/auth/trpc.qchannel.commreader.ComReader/GetGuildFeeds?bkn=1679651665"
-    cookie: "RK=cn0ZoLn/cb; ptcz=a0d378dbb20ead0b616760379518ca9bf966589da6e3d22dcf5162bd3c5a6525; uuid=144115351595185418; p_uin=o1985238626; _qpsvr_localtk=0.10829113547691505; pt4_token=bl*z-O8VOFpWD3YYurp0DLqfqJ*gVkJfawIsXE0WeY4_; p_skey=OHJFevXgEYpjtlPWY7dBKLU5PbJuDNSkRJNvvQtIiOY_; uin=o1985238626; daid=823"
+    api-url: "https://pd.qq.com/qunng/guild/gotrpc/auth/trpc.qchannel.commreader.ComReader/GetGuildFeeds?bkn=949027396"
+    cookie: "RK=cn0ZoLn/cb; ptcz=a0d378dbb20ead0b616760379518ca9bf966589da6e3d22dcf5162bd3c5a6525; uuid=144115351595185418; p_uin=o1985238626; _qpsvr_localtk=0.6726194106697341; pt4_token=OGal*bLdwijVh-lUUYmu796e0ZLTWwRHNocBcN8YeTg_; p_skey=ddkb0jpenbmOOJ80hQZ93cx0kUYGfTFD2GXTsqd8sU4_; uin=o1985238626; daid=823"
     guild-number: "pd97631607"
     get-type: 2
     sort-option: 1

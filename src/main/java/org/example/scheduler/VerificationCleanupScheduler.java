@@ -42,7 +42,7 @@ public class VerificationCleanupScheduler {
         logger.info("开始清理过期的验证挑战...");
 
         try {
-            LocalDateTime expiredBefore = LocalDateTime.now().minusHours(24); // 清理24小时前的数据
+            LocalDateTime expiredBefore = LocalDateTime.now().minusHours(1); // 清理24小时前的数据
             int deletedCount = challengeMapper.deleteExpired(expiredBefore);
             
             logger.info("清理过期验证挑战完成，删除 {} 条记录", deletedCount);
@@ -61,7 +61,7 @@ public class VerificationCleanupScheduler {
         logger.info("开始清理过期的验证会话...");
 
         try {
-            LocalDateTime expiredBefore = LocalDateTime.now().minusHours(24); // 清理24小时前的数据
+            LocalDateTime expiredBefore = LocalDateTime.now().minusHours(1); // 清理24小时前的数据
             int deletedCount = sessionMapper.deleteExpired(expiredBefore);
             
             logger.info("清理过期验证会话完成，删除 {} 条记录", deletedCount);
@@ -80,7 +80,7 @@ public class VerificationCleanupScheduler {
         logger.info("开始清理旧的访问日志...");
 
         try {
-            LocalDateTime olderThan = LocalDateTime.now().minusDays(30); // 清理30天前的日志
+            LocalDateTime olderThan = LocalDateTime.now().minusDays(1); // 清理30天前的日志
             int deletedCount = accessLogMapper.deleteOldLogs(olderThan);
             
             logger.info("清理旧访问日志完成，删除 {} 条记录", deletedCount);
