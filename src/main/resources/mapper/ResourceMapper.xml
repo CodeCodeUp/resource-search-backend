@@ -382,7 +382,7 @@
                 END
             </foreach>,
         </if>
-        id DESC
+        resource_time DESC
     </select>
 
     <!-- 查找URL重复的资源ID（保留resourceTime最新的） -->
@@ -425,5 +425,24 @@
             #{id}
         </foreach>
     </delete>
+
+    <!-- 获取所有资源用于相似度检测 -->
+    <select id="selectAllForSimilarityCheck" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM resource
+        WHERE name IS NOT NULL AND name != ''
+        ORDER BY resource_time DESC, id DESC
+    </select>
+
+    <!-- 根据资源时间范围查询资源 -->
+    <select id="selectByResourceTimeRange" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM resource
+        WHERE resource_time BETWEEN #{startTime} AND #{endTime}
+          AND name IS NOT NULL AND name != ''
+        ORDER BY resource_time DESC, id DESC
+    </select>
 
 </mapper>

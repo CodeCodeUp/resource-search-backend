@@ -144,8 +144,8 @@ public class ResourceController {
                 return ResponseEntity.ok("未发现重复资源，无需去重");
             }
 
-            logger.info("发现重复资源 - URL重复: {} 条, 名称重复: {} 条",
-                       stats.getUrlDuplicateCount(), stats.getNameDuplicateCount());
+            logger.info("发现重复资源 - URL重复: {} 条, 名称重复: {} 条, 相似度重复: {} 条",
+                       stats.getUrlDuplicateCount(), stats.getNameDuplicateCount(), stats.getSimilarityDuplicateCount());
 
             // 执行去重操作
             deduplicationService.deduplicateResources();
@@ -171,8 +171,8 @@ public class ResourceController {
             ResourceDeduplicationService.DeduplicationStats stats =
                 deduplicationService.getDeduplicationStats();
 
-            logger.info("重复资源统计 - URL重复: {} 条, 名称重复: {} 条",
-                       stats.getUrlDuplicateCount(), stats.getNameDuplicateCount());
+            logger.info("重复资源统计 - URL重复: {} 条, 名称重复: {} 条, 相似度重复: {} 条",
+                       stats.getUrlDuplicateCount(), stats.getNameDuplicateCount(), stats.getSimilarityDuplicateCount());
 
             return ResponseEntity.ok(stats);
 

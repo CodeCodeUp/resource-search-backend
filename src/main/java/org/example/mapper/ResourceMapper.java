@@ -173,4 +173,16 @@ public interface ResourceMapper {
      * 批量删除资源
      */
     int deleteByIds(@Param("ids") List<Integer> ids);
+
+    /**
+     * 获取所有资源用于相似度检测
+     * 按resource_time降序排列
+     */
+    List<Resource> selectAllForSimilarityCheck();
+
+    /**
+     * 根据资源时间范围查询资源（用于分批处理相似度检测）
+     */
+    List<Resource> selectByResourceTimeRange(@Param("startTime") Integer startTime,
+                                           @Param("endTime") Integer endTime);
 }

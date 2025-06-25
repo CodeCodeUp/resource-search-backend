@@ -21,9 +21,9 @@ public class ResourceDeduplicationScheduler {
 
     /**
      * 定时执行资源去重
-     * 每5分钟执行一次
+     * 每60分钟执行一次
      */
-    @Scheduled(fixedRate = 300000) // 5分钟 = 300000毫秒
+    @Scheduled(fixedRate = 3600000) // 5分钟 = 300000毫秒
     public void scheduledDeduplication() {
         logger.info("定时任务开始执行资源去重...");
 
