@@ -2,6 +2,7 @@ package org.example.controller;
 
 import org.example.dto.*;
 import org.example.entity.Resource;
+import org.example.service.QuarkPanService;
 import org.example.service.ResourceService;
 import org.example.service.SecurityMonitorService;
 import org.example.service.SlideVerificationService;
@@ -35,6 +36,9 @@ public class VerificationController {
 
     @Autowired
     private ResourceService resourceService;
+
+    @Autowired
+    private QuarkPanService quarkPanService;
 
     /**
      * 获取验证挑战
@@ -251,7 +255,12 @@ public class VerificationController {
                     Map<String, Object> resourceData = new HashMap<>();
                     resourceData.put("id", resource.getId());
                     resourceData.put("name", resource.getName());
-                    resourceData.put("url", resource.getUrl());
+
+                    // 处理URL - 如果是夸克网盘链接，则转换为自己的链接
+                    String originalUrl = resource.getUrl();
+                    String processedUrl = processResourceUrl(originalUrl);
+                    resourceData.put("url", processedUrl);
+
                     resourceData.put("type", resource.getType());
                     data.put("resourceData", resourceData);
                 }
@@ -334,6 +343,39 @@ public class VerificationController {
             result.put("message", e.getMessage());
             
             return ResponseEntity.internalServerError().body(result);
+        }
+    }
+
+    /**
+     * 处理资源URL - 如果是夸克网盘链接，则转换为自己的链接
+     */
+    private String processResourceUrl(String originalUrl) {
+        if (originalUrl == null || originalUrl.trim().isEmpty()) {
+            return originalUrl;
+        }
+
+        try {
+            // 检查是否包含夸克网盘链接
+            if (originalUrl.contains("pan.quark.cn/s/")) {
+                logger.info("检测到夸克网盘链接，开始转换: {}", originalUrl);
+
+                // 使用夸克网盘服务转换链接
+                String convertedUrl = quarkPanService.replaceQuarkUrls(originalUrl);
+
+                if (convertedUrl != null && !convertedUrl.equals(originalUrl)) {
+                    logger.info("夸克网盘链接转换成功: {} -> {}", originalUrl, convertedUrl);
+                    return convertedUrl;
+                } else {
+                    logger.warn("夸克网盘链接转换失败，返回原链接: {}", originalUrl);
+                    return originalUrl;
+                }
+            } else {
+                // 不是夸克网盘链接，直接返回原URL
+                return originalUrl;
+            }
+        } catch (Exception e) {
+            logger.error("处理资源URL时发生错误，返回原URL: {}", originalUrl, e);
+            return originalUrl;
         }
     }
 

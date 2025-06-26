@@ -263,40 +263,34 @@ public class QuarkPanClient {
             QuarkShareRequest shareRequest = new QuarkShareRequest(fidList, "", 1, 1);
             String jsonBody = objectMapper.writeValueAsString(shareRequest);
 
-            int retryCount = 0;
-            while (retryCount < quarkPanConfig.getMaxRetryCount()) {
-                String response = httpClientUtil.postJson(url, jsonBody, getDefaultHeaders());
+            String response = httpClientUtil.postJson(url, jsonBody, getDefaultHeaders());
 
-                if (response != null) {
-                    QuarkApiResponse<Map<String, Object>> apiResponse = objectMapper.readValue(
+            if (response != null) {
+                QuarkApiResponse<Map<String, Object>> apiResponse = objectMapper.readValue(
                         response, new TypeReference<QuarkApiResponse<Map<String, Object>>>() {}
-                    );
+                );
 
-                    if (apiResponse.isSuccess() && apiResponse.getData() != null) {
-                        Map<String, Object> data = apiResponse.getData();
+                if (apiResponse.isSuccess() && apiResponse.getData() != null) {
+                    Map<String, Object> data = apiResponse.getData();
 
-                        // 检查是否有直接的分享ID
-                        Map<String, Object> taskResp = (Map<String, Object>) data.get("task_resp");
-                        if (taskResp != null) {
-                            Map<String, Object> taskData = (Map<String, Object>) taskResp.get("data");
-                            if (taskData != null) {
-                                String shareId = (String) taskData.get("share_id");
-                                if (shareId != null) {
-                                    return shareId;
-                                }
+                    // 检查是否有直接的分享ID
+                    Map<String, Object> taskResp = (Map<String, Object>) data.get("task_resp");
+                    if (taskResp != null) {
+                        Map<String, Object> taskData = (Map<String, Object>) taskResp.get("data");
+                        if (taskData != null) {
+                            String shareId = (String) taskData.get("share_id");
+                            if (shareId != null) {
+                                return shareId;
                             }
                         }
+                    }
 
-                        // 如果没有直接的分享ID，等待任务完成
-                        String taskId = (String) data.get("task_id");
-                        if (taskId != null) {
-                            return waitForShareTask(taskId);
-                        }
+                    // 如果没有直接的分享ID，等待任务完成
+                    String taskId = (String) data.get("task_id");
+                    if (taskId != null) {
+                        return waitForShareTask(taskId);
                     }
                 }
-
-                retryCount++;
-                randomPause();
             }
 
             logger.error("创建分享失败");
@@ -313,25 +307,32 @@ public class QuarkPanClient {
      */
     private String waitForShareTask(String taskId) {
         try {
-            String url = String.format(
-                "https://drive-pc.quark.cn/1/clouddrive/task?pr=ucpro&fr=pc&uc_param_str=&retry_index=1&task_id=%s",
-                taskId
-            );
+            int retryCount = 0;
 
-            String response = httpClientUtil.get(url, getDefaultHeaders());
-
-            if (response != null) {
-                QuarkApiResponse<Map<String, Object>> apiResponse = objectMapper.readValue(
-                    response, new TypeReference<QuarkApiResponse<Map<String, Object>>>() {}
+            while (retryCount < quarkPanConfig.getMaxRetryCount()) {
+                String url = String.format(
+                        "https://drive-pc.quark.cn/1/clouddrive/task?pr=ucpro&fr=pc&uc_param_str=&retry_index=1&task_id=%s",
+                        taskId
                 );
 
-                if (apiResponse.isSuccess() && apiResponse.getData() != null) {
-                    return (String) apiResponse.getData().get("share_id");
+                String response = httpClientUtil.get(url, getDefaultHeaders());
+
+                if (response != null) {
+                    QuarkApiResponse<Map<String, Object>> apiResponse = objectMapper.readValue(
+                            response, new TypeReference<QuarkApiResponse<Map<String, Object>>>() {}
+                    );
+
+                    if (apiResponse.isSuccess() && apiResponse.getData() != null) {
+                        return (String) apiResponse.getData().get("share_id");
+                    }
                 }
+
+                retryCount++;
+                randomPause();
             }
 
+            logger.error("等待分享任务完成超时，taskId: {}", taskId);
             return null;
-
         } catch (Exception e) {
             logger.error("等待分享任务完成时发生错误，taskId: {}", taskId, e);
             return null;
@@ -387,7 +388,7 @@ public class QuarkPanClient {
      */
     private void randomPause() {
         try {
-            int pauseDuration = (int) (Math.random() * 3000) + 2000; // 2-5秒
+            int pauseDuration = (int) (Math.random() * 1000); // 0到1秒之间随机暂停
             Thread.sleep(pauseDuration);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
