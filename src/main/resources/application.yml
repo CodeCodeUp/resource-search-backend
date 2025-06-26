@@ -64,4 +64,20 @@ crawler:
     page-delay-seconds: 5
     from-param: 7
 
+# 夸克网盘配置
+quark:
+  pan:
+    # 夸克网盘Cookie（需要配置有效的Cookie）
+    cookie: "_UP_A4A_11_=wb9ca14dee084c08b2f79c525f29f803; __pus=342a34d04935582e0efc69977ea79704AATMz3ChOVKVS1H/wU2ZgPP7LTl8Q89mO1j4uVg3WL0ATvAntMj6ZYcs5kCT3O1xDZkaB18F40xQr/QhcEWaevQk; __kp=245aaee0-4bd7-11f0-88fc-1b9bbac101fb; __kps=AASU0G1po9aMTVoC4LJPkf2q; __ktd=QeYgGE9qIl95QH6lof60+A==; __uid=AASU0G1po9aMTVoC4LJPkf2q; b-user-id=776701fb-0cd3-9d60-db45-7b0d8982e234; __sdid=AASSmALXyDB+2vUet3zEPU8vjXdlvF12xfoVeM8BI9islmH/y2OtC2WFI82C2AKjZUU=; xlly_s=1; __puus=5239600f727e357eae6deb203dbaf288AATw26CY7kGhxFfUmmUqTcU0TmXYNRBwpfi0hIUcMqLyt830Nle5SqJAQnvjRcX+ZG4kF+oqOIqShgcXrrB8UBeOq5cGyCQxyKSZI8xHmFaxPUACeJnuOOAsXp6PuCgt3V627KbN+r5OtWr54uo3EBxF6OFoCWTy7QYTFa/EdCNSB8AXK8JYd9l+UEFohavz5kHtpC9upD+fYviGP0WB7rNy; isg=BN_f68KFy8quis_ZC6xN24ycbjNpRDPmiE_vhHEtIg7VAP6CeBdCNVSSxph-mAte; tfstk=g35sbXTlccm6gSdxld4EO9I2QzOf5yPy6qTArZhZkCdOkIsBYFkaIKrfdiIeXfR9BIipli8AgheDcwIXmhdVQh8AAZITSEzGG9cfrZfaSIzMsNADMurzai_GSIc1YLvA12FpywntXfee9XYd4brza77TBFAVJu5qmnJHXEdvWKp99yTwrIHxBiKppULrXIIADpnpoFnxDKLAJpKHkIKADIUB9HYXMnh8zXTbCH7_7GgPKWDVkNKIMjCTsdK70HYH86T6C3ppAjLNOF962NC7nVaBJ65BUpu4YBQlLGLBN5ik59QW6E10yxtXh1ABAgN-ieXOf6pfTrVR7CTXeIpIkjQBOHvC6QF-AeXd7tCGfqGvS15yh3vQkjv29_JReGg0rwd9kivlgucMXZQlZTR710Y1paOC4zGyVrKsh29oGetzRyMmnvitVNnZhiDpBeY64yaIUxv9-etzRyMmndLH84zQRYkc."
+    # 默认保存目录ID（需要配置目标文件夹ID）
+    default-save-directory-id: "24e30276ab7b45b6bea01e84ff2529da"
+    # 请求间隔时间（毫秒）
+    request-interval: 2000
+    # 最大重试次数
+    max-retry-count: 10
+    # 任务超时时间（毫秒）
+    task-timeout: 300000
+    # 单次转存文件数量限制
+    max-files-per-save: 40
+
 
