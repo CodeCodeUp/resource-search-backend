@@ -445,4 +445,25 @@
         ORDER BY resource_time DESC, id DESC
     </select>
 
+    <!-- 查询包含反斜杠字符的资源 -->
+    <select id="selectResourcesWithBackslashes" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM resource
+        WHERE name LIKE '%\\\%'
+           OR content LIKE '%\\\%'
+           OR url LIKE '%\\\%'
+        ORDER BY id
+    </select>
+
+    <!-- 更新单个资源的name、content、url字段 -->
+    <update id="updateResourceFields" parameterType="org.example.entity.Resource">
+        UPDATE resource
+        SET name = #{name},
+            content = #{content},
+            url = #{url},
+            update_time = NOW()
+        WHERE id = #{id}
+    </update>
+
 </mapper>

@@ -8,6 +8,7 @@ import org.example.dto.QQChannelResource;
 import org.example.entity.Resource;
 import org.example.enums.ResourceType;
 import org.example.mapper.ResourceMapper;
+import org.example.util.StringCleanupUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -318,10 +319,28 @@ public class QQChannelCrawlerService {
      */
     private void saveResourceToDatabase(QQChannelResource qqResource, ResourceType resourceType, Integer resourceTime) {
         try {
+            // 清理字段中的反斜杠字符
+            String[] cleanedFields = StringCleanupUtil.cleanResourceFields(
+                qqResource.getTitle(),
+                qqResource.getDescription(),
+                qqResource.getLink()
+            );
+
+            String cleanedName = cleanedFields[0];
+            String cleanedContent = cleanedFields[1];
+            String cleanedUrl = cleanedFields[2];
+
+            // 记录清理信息
+            if (StringCleanupUtil.containsBackslashes(qqResource.getTitle()) ||
+                StringCleanupUtil.containsBackslashes(qqResource.getDescription()) ||
+                StringCleanupUtil.containsBackslashes(qqResource.getLink())) {
+                logger.info("清理资源字段中的反斜杠字符: {}", qqResource.getTitle());
+            }
+
             Resource resource = new Resource();
-            resource.setName(qqResource.getTitle());
-            resource.setContent(qqResource.getDescription());
-            resource.setUrl(qqResource.getLink());
+            resource.setName(cleanedName);
+            resource.setContent(cleanedContent);
+            resource.setUrl(cleanedUrl);
             resource.setPig(qqResource.getImageUrl());
             resource.setLevel(1); // 默认层级为1
             resource.setType(resourceType.getCode()); // 根据频道类型设置

@@ -185,4 +185,14 @@ public interface ResourceMapper {
      */
     List<Resource> selectByResourceTimeRange(@Param("startTime") Integer startTime,
                                            @Param("endTime") Integer endTime);
+
+    /**
+     * 查询包含反斜杠字符的资源
+     */
+    List<Resource> selectResourcesWithBackslashes();
+
+    /**
+     * 更新单个资源的name、content、url字段
+     */
+    int updateResourceFields(Resource resource);
 }

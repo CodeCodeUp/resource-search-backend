@@ -8,6 +8,7 @@ import org.example.dto.SearchRequest;
 import org.example.dto.SearchResponse;
 import org.example.entity.Resource;
 import org.example.mapper.ResourceMapper;
+import org.example.util.StringCleanupUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -62,10 +63,24 @@ public class ResourceService {
     public ResourceResponse createResource(ResourceRequest request) {
         logger.info("创建新资源，名称: {}", request.getName());
 
+        // 清理字段中的反斜杠字符
+        String[] cleanedFields = StringCleanupUtil.cleanResourceFields(
+            request.getName(),
+            request.getContent(),
+            request.getUrl()
+        );
+
+        // 记录清理信息
+        if (StringCleanupUtil.containsBackslashes(request.getName()) ||
+            StringCleanupUtil.containsBackslashes(request.getContent()) ||
+            StringCleanupUtil.containsBackslashes(request.getUrl())) {
+            logger.info("清理资源字段中的反斜杠字符: {}", request.getName());
+        }
+
         Resource resource = new Resource(
-                request.getName(),
-                request.getContent(),
-                request.getUrl(),
+                cleanedFields[0],  // 清理后的name
+                cleanedFields[1],  // 清理后的content
+                cleanedFields[2],  // 清理后的url
                 request.getPig(),
                 request.getLevel(),
                 request.getType(),

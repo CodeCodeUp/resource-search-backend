@@ -8,6 +8,7 @@ import com.alibaba.excel.read.builder.ExcelReaderSheetBuilder;
 import org.example.dto.GameExcelData;
 import org.example.entity.Resource;
 import org.example.mapper.ResourceMapper;
+import org.example.util.StringCleanupUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -146,25 +147,34 @@ public class ExcelGameImportService {
      */
     private Resource convertToResource(GameExcelData excelData) {
         Resource resource = new Resource();
-        
+
         // 在游戏名前加上密码提示
         String gameName = "（密码：amuyouxi）" + excelData.getGameName().trim();
-        resource.setName(gameName);
-        
-        // 设置内容为备注
-        resource.setContent(excelData.getRemark() != null ? excelData.getRemark().trim() : "");
-        
-        // 设置URL
-        resource.setUrl(excelData.getGameUrl() != null ? excelData.getGameUrl().trim() : "");
-        
+        String remark = excelData.getRemark() != null ? excelData.getRemark().trim() : "";
+        String gameUrl = excelData.getGameUrl() != null ? excelData.getGameUrl().trim() : "";
+
+        // 清理字段中的反斜杠字符
+        String[] cleanedFields = StringCleanupUtil.cleanResourceFields(gameName, remark, gameUrl);
+
+        // 记录清理信息
+        if (StringCleanupUtil.containsBackslashes(gameName) ||
+            StringCleanupUtil.containsBackslashes(remark) ||
+            StringCleanupUtil.containsBackslashes(gameUrl)) {
+            logger.info("清理Excel游戏资源字段中的反斜杠字符: {}", gameName);
+        }
+
+        resource.setName(cleanedFields[0]);
+        resource.setContent(cleanedFields[1]);
+        resource.setUrl(cleanedFields[2]);
+
         // 设置固定值
         resource.setType("game");
         resource.setLevel(1);
         resource.setSource(1); // Excel导入
-        
+
         // 设置时间戳
         resource.setResourceTime((int) (System.currentTimeMillis() / 1000));
-        
+
         return resource;
     }
 
