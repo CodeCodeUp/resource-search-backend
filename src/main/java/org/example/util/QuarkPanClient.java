@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
@@ -287,6 +288,7 @@ public class QuarkPanClient {
 
                     // 如果没有直接的分享ID，等待任务完成
                     String taskId = (String) data.get("task_id");
+                    logger.info("taskId:{}",taskId);
                     if (taskId != null) {
                         return waitForShareTask(taskId);
                     }
@@ -308,8 +310,8 @@ public class QuarkPanClient {
     private String waitForShareTask(String taskId) {
         try {
             int retryCount = 0;
-
             while (retryCount < quarkPanConfig.getMaxRetryCount()) {
+                logger.info("waitForShareTask-retryCount:{}",retryCount);
                 String url = String.format(
                         "https://drive-pc.quark.cn/1/clouddrive/task?pr=ucpro&fr=pc&uc_param_str=&retry_index=1&task_id=%s",
                         taskId
@@ -323,7 +325,10 @@ public class QuarkPanClient {
                     );
 
                     if (apiResponse.isSuccess() && apiResponse.getData() != null) {
-                        return (String) apiResponse.getData().get("share_id");
+                        String shareUrl = (String) apiResponse.getData().get("share_id");
+                        if (StringUtils.hasLength(shareUrl)) {
+                            return shareUrl;
+                        }
                     }
                 }
 
@@ -347,6 +352,7 @@ public class QuarkPanClient {
             int retryCount = 0;
 
             while (retryCount < quarkPanConfig.getMaxRetryCount()) {
+                logger.info("getSharePassword-waitForShareTask-retryCount:{}",retryCount);
                 String url = "https://drive-pc.quark.cn/1/clouddrive/share/password?pr=ucpro&fr=pc&uc_param_str=";
 
                 Map<String, Object> requestBody = new HashMap<>();
@@ -363,7 +369,7 @@ public class QuarkPanClient {
                     if (apiResponse.getStatus() != null && apiResponse.getStatus() == 200 &&
                         apiResponse.getData() != null) {
                         String shareUrl = (String) apiResponse.getData().get("share_url");
-                        if (shareUrl != null) {
+                        if (StringUtils.hasLength(shareUrl)) {
                             logger.info("获取分享链接成功");
                             return shareUrl;
                         }
@@ -388,7 +394,7 @@ public class QuarkPanClient {
      */
     private void randomPause() {
         try {
-            int pauseDuration = (int) (Math.random() * 1000); // 0到1秒之间随机暂停
+            int pauseDuration = (int) (Math.random() * 1000) + 500; // 0.5秒到1.5秒之间随机暂停
             Thread.sleep(pauseDuration);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
